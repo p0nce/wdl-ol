@@ -57,10 +57,10 @@
       }
 	    return 0;
     }
-    EXPORT int main(audioMasterCallback hostCallback)
+    EXPORT int main(int hostCallback)
     {
     #if defined OS_OSX
-      return (VstIntPtr) VSTPluginMain(hostCallback);
+      return (VstIntPtr) VSTPluginMain((audioMasterCallback)hostCallback);
     #else
       return (int) VSTPluginMain(hostCallback);
     #endif
