@@ -1786,7 +1786,7 @@ SWELLDIALOGCOMMONIMPLEMENTS_WND(0)
   NSRect contentRect=NSMakeRect(wx,wy,cr.size.width,cr.size.height);
   if (!(self = [super initWithContentRect:contentRect styleMask:smask backing:NSBackingStoreBuffered defer:NO])) return self;
 
-  [self setDelegate:self];
+  [self setDelegate:(id<NSWindowDelegate>)self];
   [self setAcceptsMouseMovedEvents:YES];
   [self setContentView:(NSView *)child];
   [self useOptimizedDrawing:YES];
@@ -1835,7 +1835,7 @@ SWELLDIALOGCOMMONIMPLEMENTS_WND(0)
   
   [self setAcceptsMouseMovedEvents:YES];
   [self useOptimizedDrawing:YES];
-  [self setDelegate:self];
+  [self setDelegate:(id<NSWindowDelegate>)self];
   updateWindowCollection(self);
   
   if (resstate&&resstate->title) SetWindowText((HWND)self, resstate->title);
@@ -1917,7 +1917,7 @@ SWELLDIALOGCOMMONIMPLEMENTS_WND(1)
 
   [self setAcceptsMouseMovedEvents:YES];
   [self useOptimizedDrawing:YES];
-  [self setDelegate:self];
+  [self setDelegate:(id<NSWindowDelegate>)self];
   updateWindowCollection(self);
 
   if (parent && [(id)parent respondsToSelector:@selector(swellAddOwnedWindow:)])
@@ -2282,7 +2282,7 @@ void SWELL_CarbonWndHost_SetWantAllKeys(void* carbonhost, bool want)
     //CFRetain(wndref);
 
     m_cwnd = [[NSWindow alloc] initWithWindowRef:wndref];  
-    [m_cwnd setDelegate:self];    
+    [m_cwnd setDelegate:(id<NSWindowDelegate>)self];    
     
     ShowWindow(wndref);
     

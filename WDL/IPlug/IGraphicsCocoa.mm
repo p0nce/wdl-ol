@@ -530,7 +530,7 @@ inline IMouseMod GetRightMouseMod(NSEvent* pEvent)
   
   [mTextFieldView setStringValue: ToNSString(pString)];
   [mTextFieldView setBordered: NO];
-  [mTextFieldView setDelegate: self];
+  [mTextFieldView setDelegate: (id<NSTextFieldDelegate>)self];
   //[mTextFieldView setAutoresizingMask:NSViewMinYMargin];
   //[mTextFieldView sizeToFit];
 
