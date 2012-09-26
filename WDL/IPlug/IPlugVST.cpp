@@ -172,7 +172,7 @@ EHost IPlugVST::GetHost()
     int version = 0;
     mHostCallback(&mAEffect, audioMasterGetProductString, 0, 0, productStr, 0.0f);
     if (CSTR_NOT_EMPTY(vendorStr) || CSTR_NOT_EMPTY(productStr)) {
-      int decVer = mHostCallback(&mAEffect, audioMasterGetVendorVersion, 0, 0, 0, 0.0f);
+      int decVer = (int)mHostCallback(&mAEffect, audioMasterGetVendorVersion, 0, 0, 0, 0.0f);
       int ver = decVer / 10000;
       int rmaj = (decVer - 10000 * ver) / 100;
       int rmin = (decVer - 10000 * ver - 100 * rmaj);
@@ -384,7 +384,7 @@ VstIntPtr VSTCALLBACK IPlugVST::VSTDispatcher(AEffect *pEffect, VstInt32 opCode,
 	    return 0;
     }
     case effSetBlockSize: {
-	    _this->SetBlockSize(value);
+	    _this->SetBlockSize((int)value);
 	    _this->Reset();
 	    return 0;
     }
@@ -467,7 +467,7 @@ VstIntPtr VSTCALLBACK IPlugVST::VSTDispatcher(AEffect *pEffect, VstInt32 opCode,
       if (ptr) {
         bool isBank = (!idx);
         ByteChunk* pChunk = (isBank ? &(_this->mBankState) : &(_this->mState));
-        pChunk->Resize(value);
+        pChunk->Resize((int)value);
         memcpy(pChunk->GetBytes(), ptr, value);
         int pos = 0;
         int iplugVer = GetIPlugVerFromChunk(pChunk, &pos);
@@ -627,7 +627,7 @@ VstIntPtr VSTCALLBACK IPlugVST::VSTDispatcher(AEffect *pEffect, VstInt32 opCode,
       // Support Reaper VST extensions: http://www.reaper.fm/sdk/vst/
       if (idx == effGetParamDisplay && ptr) {
         if (value >= 0 && value < _this->NParams()) {
-          _this->GetParam(value)->GetDisplayForHost((double) opt, true, (char*) ptr);
+          _this->GetParam((int)value)->GetDisplayForHost((double) opt, true, (char*) ptr);
         }
         return 0xbeef;
       }
