@@ -1942,6 +1942,12 @@ void RtMidiOut :: sendMessage( std::vector<unsigned char> *message )
 
 // Thanks to Jean-Baptiste Berruchon for the sysex code.
 
+#ifndef __WINDOWS_MM__
+#  ifdef _WIN32
+#    define __WINDOWS_MM__
+#  endif
+#endif
+
 #if defined(__WINDOWS_MM__)
 
 // The Windows MM API is based on the use of a callback function for
@@ -1951,6 +1957,8 @@ void RtMidiOut :: sendMessage( std::vector<unsigned char> *message )
 // Windows MM MIDI header files.
 #include <windows.h>
 #include <mmsystem.h>
+
+#pragma comment(lib, "winmm.lib")
 
 #define  RT_SYSEX_BUFFER_SIZE 1024
 #define  RT_SYSEX_BUFFER_COUNT 4
