@@ -384,30 +384,80 @@ bool IFaderControl::IsHit(int x, int y)
   }
 }
 
+void IKnobControl::OnMouseUp(int x, int y, IMouseMod* pMod)
+{
+  mState = STATE_NORMAL;
+}
+
+void IKnobControl::OnMouseOut()
+{
+  mState = STATE_NORMAL;
+}
+
 void IKnobControl::OnMouseDrag(int x, int y, int dX, int dY, IMouseMod* pMod)
 {
-  double gearing = mGearing;
-  
-  #ifdef PROTOOLS
-    #ifdef OS_WIN
-      if (pMod->C) gearing *= 10.0;
-    #else
-      if (pMod->R) gearing *= 10.0;
-    #endif
-  #else
-    if (pMod->C || pMod->S) gearing *= 10.0;
-  #endif
-  
-  if (mDirection == kVertical)
+  switch (mState)
   {
-    mValue += (double) dY / (double) (mRECT.T - mRECT.B) / gearing;
-  }
-  else
-  {
-    mValue += (double) dX / (double) (mRECT.R - mRECT.L) / gearing;
-  }
+    case STATE_NORMAL:
+    {
+ok:
+      double gearing = mGearing;
+      #ifdef PROTOOLS
+        #ifdef OS_WIN
+          if (pMod->C) gearing *= 10.0;
+        #else
+          if (pMod->R) gearing *= 10.0;
+        #endif
+      #else
+        if (pMod->C || pMod->S) gearing *= 10.0;
+      #endif
 
-  SetDirty();
+      if (mDirection == kVertical)
+      {
+        if (dY == 0)
+        return;
+        mValue += (double) dY / (double) (mRECT.T - mRECT.B) / gearing;
+      }
+      else
+      {
+        if (dX == 0) 
+          return;
+        mValue += (double) dX / (double) (mRECT.R - mRECT.L) / gearing;
+      }
+
+      SetDirty();
+    
+      if (mValue == mClampLo)
+      {
+        mState = STATE_WAIT_FOR_Y_BELOW;
+        mYLimit = y + dY;
+      }
+      else if (mValue == mClampHi)
+      {
+        mState = STATE_WAIT_FOR_Y_ABOVE;
+        mYLimit = y + dY;
+      }
+      break;
+    }
+
+    case STATE_WAIT_FOR_Y_ABOVE:
+      if (y + dY > mYLimit)
+      {
+        mState = STATE_NORMAL;
+        dY = dY - mYLimit + y;
+        goto ok;
+      }
+      break;
+
+    case STATE_WAIT_FOR_Y_BELOW:
+      if (y + dY < mYLimit)
+      {
+        dY = dY - mYLimit + y;
+        mState = STATE_NORMAL;
+        goto ok;
+      }
+      break;
+    }
 }
 
 IKnobLineControl::IKnobLineControl(IPlugBase* pPlug, IRECT pR, int paramIdx,

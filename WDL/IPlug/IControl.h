@@ -223,17 +223,30 @@ const double DEFAULT_GEARING = 4.0;
 class IKnobControl : public IControl
 {
 public:
+  enum State
+  {
+    STATE_NORMAL,
+    STATE_WAIT_FOR_Y_BELOW,
+    STATE_WAIT_FOR_Y_ABOVE
+  };
+
   IKnobControl(IPlugBase* pPlug, IRECT pR, int paramIdx, EDirection direction = kVertical,
                double gearing = DEFAULT_GEARING)
-    : IControl(pPlug, pR, paramIdx), mDirection(direction), mGearing(gearing) {}
+    : IControl(pPlug, pR, paramIdx), mDirection(direction), mGearing(gearing),
+      mState(STATE_NORMAL)
+      {}
   virtual ~IKnobControl() {}
 
+  virtual void OnMouseUp(int x, int y, IMouseMod* pMod);
+  void OnMouseOut();
   void SetGearing(double gearing) { mGearing = gearing; }
   virtual void OnMouseDrag(int x, int y, int dX, int dY, IMouseMod* pMod);
 
 protected:
   EDirection mDirection;
   double mGearing;
+  State mState;
+  int mYLimit;
 };
 
 // A knob that is just a line.
