@@ -34,7 +34,7 @@ static void base64encode(const unsigned char *in, char *out, int len)
   *out++=0;
 }
 
-static int base64decode(const char *src, unsigned char *dest, int destsize)
+static size_t base64decode(const char *src, unsigned char *dest, int destsize)
 {
   unsigned char *olddest=dest;
 
