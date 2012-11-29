@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 46;
+	objectVersion = 45;
 	objects = {
 
 /* Begin PBXAggregateTarget section */
@@ -437,8 +437,7 @@
 		08FB7793FE84155DC02AAC07 /* Project object */ = {
 			isa = PBXProject;
 			buildConfigurationList = 1DEB91EF08733DB70010E9CD /* Build configuration list for PBXProject "lice" */;
-			compatibilityVersion = "Xcode 3.2";
-			developmentRegion = English;
+			compatibilityVersion = "Xcode 3.1";
 			hasScannedForEncodings = 1;
 			knownRegions = (
 				English,
@@ -613,6 +612,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 4F8D4BAD13E974CF004F7633 /* lice.xcconfig */;
 			buildSettings = {
+				CERTIFICATE_ID = "GFM owner";
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -620,12 +620,17 @@
 					"$(DEBUG_DEFS)",
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = YES;
-				GCC_VERSION = "$(COMPILER)";
+				GCC_VERSION = 4.0;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = (
+					"-Wno-implicit",
+					"-Wno-unused",
+					"-Wp,v",
+				);
 				PREBINDING = NO;
-				SDKROOT = "$(BASE_SDK)";
+				SDKROOT = macosx10.4;
 			};
 			name = Debug;
 		};
@@ -633,17 +638,23 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 4F8D4BAD13E974CF004F7633 /* lice.xcconfig */;
 			buildSettings = {
+				CERTIFICATE_ID = "GFM owner";
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(ALL_DEFS)",
 					"$(RELEASE_DEFS)",
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = YES;
-				GCC_VERSION = "$(COMPILER)";
+				GCC_VERSION = 4.0;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				OTHER_CFLAGS = (
+					"-Wno-implicit",
+					"-Wno-unused",
+					"-Wp,v",
+				);
 				PREBINDING = NO;
-				SDKROOT = "$(BASE_SDK)";
+				SDKROOT = macosx10.4;
 			};
 			name = Release;
 		};

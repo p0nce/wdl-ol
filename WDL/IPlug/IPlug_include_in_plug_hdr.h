@@ -16,6 +16,7 @@
   typedef IPlugVST3 IPlug;
   #define API_EXT "vst3"
 #elif defined AU_API
+
   #include "IPlugAU.h"
   typedef IPlugAU IPlug;
   #define API_EXT "audiounit"
