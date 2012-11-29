@@ -1,0 +1,412 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="IPlug" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option platforms="Windows;" />
+				<Option output="bin\Debug\libIPlug" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="" />
+				<Option object_output="obj\Debug\" />
+				<Option type="2" />
+				<Option compiler="gcc" />
+				<Option createDefFile="1" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option output="bin\Release\libIPlug" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="" />
+				<Option object_output="obj\Release\" />
+				<Option type="2" />
+				<Option compiler="gcc" />
+				<Option createDefFile="1" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Winit-self" />
+			<Add option="-Wredundant-decls" />
+			<Add option="-Wcast-align" />
+			<Add option="-Wundef" />
+			<Add option="-Wmissing-declarations" />
+			<Add option="-Wmissing-include-dirs" />
+			<Add option="-DGLEW_STATIC" />
+			<Add directory="." />
+			<Add directory="..\zlib" />
+		</Compiler>
+		<Linker>
+			<Add library="gdi32" />
+			<Add library="glu32" />
+			<Add library="opengl32" />
+			<Add library="comdlg32" />
+			<Add library="wininet" />
+		</Linker>
+		<Unit filename="Containers.h" />
+		<Unit filename="Hosts.cpp" />
+		<Unit filename="Hosts.h" />
+		<Unit filename="IAutoGUI.h" />
+		<Unit filename="IBitmapMonoText.cpp" />
+		<Unit filename="IBitmapMonoText.h" />
+		<Unit filename="IControl.cpp" />
+		<Unit filename="IControl.h" />
+		<Unit filename="IGraphics.cpp" />
+		<Unit filename="IGraphics.h" />
+		<Unit filename="IGraphicsWin.cpp" />
+		<Unit filename="IGraphicsWin.h" />
+		<Unit filename="IKeyboardControl.h" />
+		<Unit filename="IMidiQueue.h" />
+		<Unit filename="IParam.cpp" />
+		<Unit filename="IParam.h" />
+		<Unit filename="IPlugBase.cpp" />
+		<Unit filename="IPlugBase.h" />
+		<Unit filename="IPlugStructs.cpp" />
+		<Unit filename="IPlugStructs.h" />
+		<Unit filename="IPlugVST.cpp" />
+		<Unit filename="IPlugVST.h" />
+		<Unit filename="IPopupMenu.cpp" />
+		<Unit filename="IPopupMenu.h" />
+		<Unit filename="Log.cpp" />
+		<Unit filename="Log.h" />
+		<Unit filename="NChanDelay.h" />
+		<Unit filename="..\giflib\config.h" />
+		<Unit filename="..\giflib\dgif_lib.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\giflib\egif_lib.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\giflib\gif_hash.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\giflib\gif_hash.h" />
+		<Unit filename="..\giflib\gif_lib.h" />
+		<Unit filename="..\giflib\gif_lib_private.h" />
+		<Unit filename="..\giflib\gifalloc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jcapimin.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jcapistd.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jccoefct.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jccolor.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jcdctmgr.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jchuff.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jchuff.h" />
+		<Unit filename="..\jpeglib\jcinit.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jcmainct.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jcmarker.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jcmaster.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jcomapi.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jconfig.h" />
+		<Unit filename="..\jpeglib\jcparam.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jcphuff.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jcprepct.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jcsample.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jctrans.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jdapimin.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jdapistd.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jdatadst.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jdatasrc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jdcoefct.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jdcolor.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jdct.h" />
+		<Unit filename="..\jpeglib\jddctmgr.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jdhuff.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jdhuff.h" />
+		<Unit filename="..\jpeglib\jdinput.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jdmainct.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jdmarker.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jdmaster.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jdmerge.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jdphuff.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jdpostct.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jdsample.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jdtrans.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jerror.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jerror.h" />
+		<Unit filename="..\jpeglib\jfdctflt.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jfdctfst.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jfdctint.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jidctflt.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jidctfst.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jidctint.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jidctred.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jinclude.h" />
+		<Unit filename="..\jpeglib\jmemmgr.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jmemnobs.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jmemsys.h" />
+		<Unit filename="..\jpeglib\jmorecfg.h" />
+		<Unit filename="..\jpeglib\jpegint.h" />
+		<Unit filename="..\jpeglib\jpeglib.h" />
+		<Unit filename="..\jpeglib\jquant1.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jquant2.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jutils.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\jpeglib\jversion.h" />
+		<Unit filename="..\libpng\png.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\libpng\png.h" />
+		<Unit filename="..\libpng\pngconf.h" />
+		<Unit filename="..\libpng\pngdebug.h" />
+		<Unit filename="..\libpng\pngerror.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\libpng\pngget.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\libpng\pnginfo.h" />
+		<Unit filename="..\libpng\pnglibconf.h" />
+		<Unit filename="..\libpng\pngmem.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\libpng\pngpread.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\libpng\pngpriv.h" />
+		<Unit filename="..\libpng\pngread.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\libpng\pngrio.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\libpng\pngrtran.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\libpng\pngrutil.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\libpng\pngset.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\libpng\pngstruct.h" />
+		<Unit filename="..\libpng\pngtrans.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\libpng\pngwio.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\libpng\pngwrite.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\libpng\pngwtran.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\libpng\pngwutil.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\lice\glew\src\glew.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\lice\lice.cpp" />
+		<Unit filename="..\lice\lice.h" />
+		<Unit filename="..\lice\lice_arc.cpp" />
+		<Unit filename="..\lice\lice_bezier.h" />
+		<Unit filename="..\lice\lice_bmp.cpp" />
+		<Unit filename="..\lice\lice_colorspace.cpp" />
+		<Unit filename="..\lice\lice_combine.h" />
+		<Unit filename="..\lice\lice_extended.h" />
+		<Unit filename="..\lice\lice_gif.cpp" />
+		<Unit filename="..\lice\lice_gif_write.cpp" />
+		<Unit filename="..\lice\lice_gl_ctx.cpp" />
+		<Unit filename="..\lice\lice_gl_ctx.h" />
+		<Unit filename="..\lice\lice_glbitmap.cpp" />
+		<Unit filename="..\lice\lice_glbitmap.h" />
+		<Unit filename="..\lice\lice_ico.cpp" />
+		<Unit filename="..\lice\lice_image.cpp" />
+		<Unit filename="..\lice\lice_jpg.cpp" />
+		<Unit filename="..\lice\lice_jpg_write.cpp" />
+		<Unit filename="..\lice\lice_lcf.cpp" />
+		<Unit filename="..\lice\lice_lcf.h" />
+		<Unit filename="..\lice\lice_line.cpp" />
+		<Unit filename="..\lice\lice_lvg.cpp" />
+		<Unit filename="..\lice\lice_palette.cpp" />
+		<Unit filename="..\lice\lice_pcx.cpp" />
+		<Unit filename="..\lice\lice_png.cpp" />
+		<Unit filename="..\lice\lice_png_write.cpp" />
+		<Unit filename="..\lice\lice_svg.cpp" />
+		<Unit filename="..\lice\lice_texgen.cpp" />
+		<Unit filename="..\lice\lice_text.cpp" />
+		<Unit filename="..\lice\lice_text.h" />
+		<Unit filename="..\lice\lice_textnew.cpp" />
+		<Unit filename="..\tinyxml\libxml_tinyxml.cpp" />
+		<Unit filename="..\tinyxml\libxml_tinyxml.h" />
+		<Unit filename="..\tinyxml\svgtiny_colors.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\tinyxml\tinystr.cpp" />
+		<Unit filename="..\tinyxml\tinystr.h" />
+		<Unit filename="..\tinyxml\tinyxml.cpp" />
+		<Unit filename="..\tinyxml\tinyxml.h" />
+		<Unit filename="..\tinyxml\tinyxmlerror.cpp" />
+		<Unit filename="..\tinyxml\tinyxmlparser.cpp" />
+		<Unit filename="..\zlib\adler32.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\zlib\compress.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\zlib\crc32.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\zlib\crc32.h" />
+		<Unit filename="..\zlib\deflate.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\zlib\deflate.h" />
+		<Unit filename="..\zlib\gzclose.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\zlib\gzguts.h" />
+		<Unit filename="..\zlib\gzlib.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\zlib\gzread.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\zlib\gzwrite.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\zlib\infback.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\zlib\inffast.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\zlib\inffast.h" />
+		<Unit filename="..\zlib\inffixed.h" />
+		<Unit filename="..\zlib\inflate.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\zlib\inflate.h" />
+		<Unit filename="..\zlib\inftrees.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\zlib\inftrees.h" />
+		<Unit filename="..\zlib\ioapi.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\zlib\ioapi.h" />
+		<Unit filename="..\zlib\trees.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\zlib\trees.h" />
+		<Unit filename="..\zlib\uncompr.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\zlib\zconf.h" />
+		<Unit filename="..\zlib\zip.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\zlib\zip.h" />
+		<Unit filename="..\zlib\zlib.h" />
+		<Unit filename="..\zlib\zutil.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\zlib\zutil.h" />
+		<Extensions>
+			<code_completion />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
