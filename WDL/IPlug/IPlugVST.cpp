@@ -64,15 +64,19 @@ IPlugVST::IPlugVST(IPlugInstanceInfo instanceInfo,
   mAEffect.numOutputs = nOutputs;
   mAEffect.uniqueID = uniqueID;
   mAEffect.version = GetEffectVersion(true);
+#if VST_FORCE_DEPRECATED    
   mAEffect.__ioRatioDeprecated = 1.0f;
   mAEffect.__processDeprecated = VSTProcess;
+#endif
   mAEffect.processReplacing = VSTProcessReplacing;
   mAEffect.processDoubleReplacing = VSTProcessDoubleReplacing;
   mAEffect.initialDelay = latency;
   mAEffect.flags = effFlagsCanReplacing | effFlagsCanDoubleReplacing;
   
   if (plugDoesChunks) { mAEffect.flags |= effFlagsProgramChunks; }
-  if (LegalIO(1, -1)) { mAEffect.flags |= __effFlagsCanMonoDeprecated; }
+#if VST_FORCE_DEPRECATED    
+    if (LegalIO(1, -1)) { mAEffect.flags |= __effFlagsCanMonoDeprecated; }
+#endif
   if (plugIsInst) { mAEffect.flags |= effFlagsIsSynth; }
 
   memset(&mEditRect, 0, sizeof(ERect));
@@ -336,7 +340,9 @@ VstIntPtr VSTCALLBACK IPlugVST::VSTDispatcher(AEffect *pEffect, VstInt32 opCode,
   switch (opCode)
   {
     case effEditIdle:
-    case __effIdleDeprecated:
+#if VST_FORCE_DEPRECATED
+      case __effIdleDeprecated:
+#endif
     #ifdef USE_IDLE_CALLS
     _this->OnIdle();
     #endif
@@ -480,10 +486,12 @@ VstIntPtr VSTCALLBACK IPlugVST::VSTDispatcher(AEffect *pEffect, VstInt32 opCode,
       }
       return 0;
     }
+#if VST_FORCE_DEPRECATED
     case __effIdentifyDeprecated:
     {
       return 'NvEf';  // Random deprecated magic.
     }
+#endif
     case effGetChunk:
     {
       BYTE** ppData = (BYTE**) ptr;
@@ -823,7 +831,9 @@ void IPlugVST::VSTPrepProcess(SAMPLETYPE** inputs, SAMPLETYPE** outputs, VstInt3
 {
   if (mDoesMidi)
   {
+#if VST_FORCE_DEPRECATED
     mHostCallback(&mAEffect, __audioMasterWantMidiDeprecated, 0, 0, 0, 0.0f);
+#endif
   }
   AttachInputBuffers(0, NInChannels(), inputs, nFrames);
   AttachOutputBuffers(0, NOutChannels(), outputs);
