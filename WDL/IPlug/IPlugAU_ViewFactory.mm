@@ -1,4 +1,4 @@
-#import <Cocoa/Cocoa.h>
+//#import <Cocoa/Cocoa.h>
 #include "../IPlug/IGraphicsCocoa.h"
 #include "resource.h"   // This is your plugin's resource.h.
 
