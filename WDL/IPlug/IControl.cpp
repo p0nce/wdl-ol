@@ -36,6 +36,24 @@ void IControl::SetDirty(bool pushParamToPlug)
   if (pushParamToPlug && mPlug && mParamIdx >= 0)
   {
     mPlug->SetParameterFromGUI(mParamIdx, mValue);
+    IParam* pParam = mPlug->GetParam(mParamIdx);
+    
+    if (mValDisplayControl) 
+    {
+      WDL_String plusLabel;
+      char str[32];
+      pParam->GetDisplayForHost(str);
+      plusLabel.Set(str, 32);
+      plusLabel.Append(" ", 32);
+      plusLabel.Append(pParam->GetLabelForHost(), 32);
+      
+      ((ITextControl*)mValDisplayControl)->SetTextFromPlug(plusLabel.Get());
+    }
+    
+    if (mNameDisplayControl) 
+    {
+      ((ITextControl*)mNameDisplayControl)->SetTextFromPlug((char*) pParam->GetNameForHost());
+    }
   }
 }
 
@@ -143,6 +161,49 @@ void IControl::PromptUserInput(IRECT* pTextRect)
   }
 }
 
+IControl::AuxParam* IControl::GetAuxParam(int idx)
+{
+  assert(idx > -1 && idx < mAuxParams.GetSize());
+  return mAuxParams.Get() + idx;
+}
+
+int IControl::AuxParamIdx(int paramIdx)
+{
+  for (int i=0;i<mAuxParams.GetSize();i++)
+  {
+    if(GetAuxParam(i)->mParamIdx == paramIdx)
+      return i;
+  }
+  
+  return -1;
+}
+
+void IControl::AddAuxParam(int paramIdx)
+{
+  mAuxParams.Add(AuxParam(paramIdx));
+}
+
+void IControl::SetAuxParamValueFromPlug(int auxParamIdx, double value)
+{
+  AuxParam* auxParam = GetAuxParam(auxParamIdx);
+  
+  if (auxParam->mValue != value)
+  {
+    auxParam->mValue = value;
+    SetDirty(false);
+    Redraw();
+  }
+}
+
+void IControl::SetAllAuxParamsFromGUI()
+{
+  for (int i=0;i<mAuxParams.GetSize();i++)
+  {
+    AuxParam* auxParam = GetAuxParam(i);
+    mPlug->SetParameterFromGUI(auxParam->mParamIdx, auxParam->mValue);
+  }
+}
+
 bool IPanelControl::Draw(IGraphics* pGraphics)
 {
   pGraphics->FillIRect(&mColor, &mRECT, &mBlend);
@@ -183,6 +244,43 @@ void ISwitchControl::OnMouseDblClick(int x, int y, IMouseMod* pMod)
   OnMouseDown(x, y, pMod);
 }
 
+void ISwitchPopUpControl::OnMouseDown(int x, int y, IMouseMod* pMod)
+{
+  PromptUserInput();
+
+  SetDirty();
+}
+
+ISwitchFramesControl::ISwitchFramesControl(IPlugBase* pPlug, int x, int y, int paramIdx, IBitmap* pBitmap, bool imagesAreHorizontal, IChannelBlend::EBlendMethod blendMethod)
+  : ISwitchControl(pPlug, x, y, paramIdx, pBitmap, blendMethod)
+{
+  mDisablePrompt = false;
+  
+  for(int i = 0; i < pBitmap->N; i++)
+  {
+    if (imagesAreHorizontal)
+      mRECTs.Add(mRECT.SubRectHorizontal(pBitmap->N, i)); 
+    else
+      mRECTs.Add(mRECT.SubRectVertical(pBitmap->N, i)); 
+  }
+}
+
+void ISwitchFramesControl::OnMouseDown(int x, int y, IMouseMod* pMod)
+{
+  int n = mRECTs.GetSize();
+  
+  for (int i = 0; i < n; i++) 
+  {
+    if (mRECTs.Get()[i].Contains(x, y)) 
+    {
+      mValue = (double) i / (double) (n - 1);
+      break;
+    }
+  }
+  
+  SetDirty();
+}
+
 IInvisibleSwitchControl::IInvisibleSwitchControl(IPlugBase* pPlug, IRECT pR, int paramIdx)
   :   IControl(pPlug, pR, paramIdx, IChannelBlend::kBlendClobber)
 {
@@ -203,27 +301,61 @@ void IInvisibleSwitchControl::OnMouseDown(int x, int y, IMouseMod* pMod)
 }
 
 IRadioButtonsControl::IRadioButtonsControl(IPlugBase* pPlug, IRECT pR, int paramIdx, int nButtons,
-    IBitmap* pBitmap, EDirection direction)
+    IBitmap* pBitmap, EDirection direction, bool reverse)
   :   IControl(pPlug, pR, paramIdx), mBitmap(*pBitmap)
 {
   mRECTs.Resize(nButtons);
-  int x = mRECT.L, y = mRECT.T, h = int((double) pBitmap->H / (double) pBitmap->N);
-  if (direction == kHorizontal)
+  int h = int((double) pBitmap->H / (double) pBitmap->N);
+  
+  if (reverse) 
   {
-    int dX = int((double) (pR.W() - nButtons * pBitmap->W) / (double) (nButtons - 1));
-    for (int i = 0; i < nButtons; ++i)
+    if (direction == kHorizontal)
     {
-      mRECTs.Get()[i] = IRECT(x, y, x + pBitmap->W, y + h);
-      x += pBitmap->W + dX;
+      int dX = int((double) (pR.W() - nButtons * pBitmap->W) / (double) (nButtons - 1));
+      int x = mRECT.R - pBitmap->W - dX;
+      int y = mRECT.T;
+      
+      for (int i = 0; i < nButtons; ++i)
+      {
+        mRECTs.Get()[i] = IRECT(x, y, x + pBitmap->W, y + h);
+        x -= pBitmap->W + dX;
+      }
     }
+    else
+    {
+      int dY = int((double) (pR.H() - nButtons * h) /  (double) (nButtons - 1));
+      int x = mRECT.L;
+      int y = mRECT.B - h - dY;
+      
+      for (int i = 0; i < nButtons; ++i)
+      {
+        mRECTs.Get()[i] = IRECT(x, y, x + pBitmap->W, y + h);
+        y -= h + dY;
+      }
+    }
+    
   }
   else
   {
-    int dY = int((double) (pR.H() - nButtons * h) /  (double) (nButtons - 1));
-    for (int i = 0; i < nButtons; ++i)
+    int x = mRECT.L, y = mRECT.T;
+    
+    if (direction == kHorizontal)
     {
-      mRECTs.Get()[i] = IRECT(x, y, x + pBitmap->W, y + h);
-      y += h + dY;
+      int dX = int((double) (pR.W() - nButtons * pBitmap->W) / (double) (nButtons - 1));
+      for (int i = 0; i < nButtons; ++i)
+      {
+        mRECTs.Get()[i] = IRECT(x, y, x + pBitmap->W, y + h);
+        x += pBitmap->W + dX;
+      }
+    }
+    else
+    {
+      int dY = int((double) (pR.H() - nButtons * h) /  (double) (nButtons - 1));
+      for (int i = 0; i < nButtons; ++i)
+      {
+        mRECTs.Get()[i] = IRECT(x, y, x + pBitmap->W, y + h);
+        y += h + dY;
+      }
     }
   }
 }

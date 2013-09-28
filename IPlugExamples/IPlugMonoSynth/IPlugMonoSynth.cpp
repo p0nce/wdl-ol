@@ -79,8 +79,8 @@ IPlugMonoSynth::~IPlugMonoSynth() {}
 void IPlugMonoSynth::ProcessDoubleReplacing(double** inputs, double** outputs, int nFrames)
 {
   // Mutex is already locked for us.
-  double* in1 = inputs[0];
-  double* in2 = inputs[1];
+//  double* in1 = inputs[0];
+//  double* in2 = inputs[1];
   double* out1 = outputs[0];
   double* out2 = outputs[1];
   double peakL = 0.0, peakR = 0.0;
@@ -108,7 +108,7 @@ void IPlugMonoSynth::ProcessDoubleReplacing(double** inputs, double** outputs, i
     }
   }
 
-  for (int offset = 0; offset < nFrames; ++offset, ++in1, ++in2, ++out1, ++out2)
+  for (int offset = 0; offset < nFrames; ++offset, /*++in1, ++in2,*/ ++out1, ++out2)
   {
     while (!mMidiQueue.Empty())
     {
@@ -207,17 +207,23 @@ void IPlugMonoSynth::OnParamChange(int paramIdx)
 void IPlugMonoSynth::ProcessMidiMsg(IMidiMsg* pMsg)
 {
   int status = pMsg->StatusMsg();
+  int velocity = pMsg->Velocity();
 
-  // filter only note messages
   switch (status)
   {
     case IMidiMsg::kNoteOn:
-      mKeyStatus[pMsg->NoteNumber()] = true;
-      mNumKeys += 1;
-      break;
     case IMidiMsg::kNoteOff:
-      mKeyStatus[pMsg->NoteNumber()] = false;
-      mNumKeys -= 1;
+      // filter only note messages
+      if (status == IMidiMsg::kNoteOn && velocity)
+      {
+        mKeyStatus[pMsg->NoteNumber()] = true;
+        mNumKeys += 1;
+      }
+      else
+      {
+        mKeyStatus[pMsg->NoteNumber()] = false;
+        mNumKeys -= 1;
+      }
       break;
     default:
       return; // if !note message, nothing gets added to the queue

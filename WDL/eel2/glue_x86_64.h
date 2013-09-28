@@ -166,12 +166,12 @@ static int GLUE_RESET_WTP(unsigned char *out, void *ptr)
 extern void win64_callcode(INT_PTR code, INT_PTR ram_tab);
 #define GLUE_CALL_CODE(bp, cp, rt) win64_callcode(cp, rt)
 
-static unsigned char *EEL_GLUE_set_immediate(void *_p, const void *newv)
+static unsigned char *EEL_GLUE_set_immediate(void *_p, INT_PTR newv)
 {
   char *p=(char*)_p;
   INT_PTR scan = 0xFEFEFEFEFEFEFEFE;
   while (*(INT_PTR *)p != scan) p++;
-  *(INT_PTR *)p = (INT_PTR)newv;
+  *(INT_PTR *)p = newv;
   return (unsigned char *) (((INT_PTR*)p)+1);
 }
 
@@ -180,7 +180,7 @@ static unsigned char *EEL_GLUE_set_immediate(void *_p, const void *newv)
 #define GLUE_INLINE_LOOPS
 
 static const unsigned char GLUE_LOOP_LOADCNT[]={
-        0xDF, 0x3E,           //fistp qword [rsi]
+        0xDD, 0x0E,           //fistTp qword [rsi]
   0x48, 0x8B, 0x0E,           // mov rcx, [rsi]
   0x48, 0x81, 0xf9, 1,0,0,0,  // cmp rcx, 1
         0x0F, 0x8C, 0,0,0,0,  // JL <skipptr>
@@ -240,6 +240,21 @@ static EEL_F onepointfive=1.5f;
 #define GLUE_INVSQRT_NEEDREPL &negativezeropointfive, &onepointfive,
 
 #define GLUE_HAS_NATIVE_TRIGSQRTLOG
+
+
+static void *GLUE_realAddress(void *fn, void *fn_e, int *size)
+{
+  static const unsigned char sig[12] = { 0x89, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
+  unsigned char *p = (unsigned char *)fn;
+
+  while (memcmp(p,sig,sizeof(sig))) p++;
+  p+=sizeof(sig);
+  fn = p;
+
+  while (memcmp(p,sig,sizeof(sig))) p++;
+  *size = p - (unsigned char *)fn;
+  return fn;
+}
 
 // end of x86-64
 

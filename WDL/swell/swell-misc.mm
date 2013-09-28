@@ -7,6 +7,8 @@
 
 #include "../mutex.h"
 
+HWND g_swell_only_timerhwnd;
+
 @implementation SWELL_TimerFuncTarget
 
 -(id) initWithId:(UINT_PTR)tid hwnd:(HWND)h callback:(TIMERPROC)cb
@@ -21,6 +23,8 @@
 }
 -(void)SWELL_Timer:(id)sender
 {
+  if (g_swell_only_timerhwnd && m_hwnd != g_swell_only_timerhwnd) return;
+  
   m_cb(m_hwnd,WM_TIMER,m_timerid,GetTickCount());
 }
 @end
@@ -49,7 +53,7 @@ void SWELL_CFStringToCString(const void *str, char *buf, int buflen)
   NSData *data = [s dataUsingEncoding:NSUTF8StringEncoding allowLossyConversion:YES];
   if (!data)
   {
-    [s getCString:buf maxLength:buflen-1];
+    [s getCString:buf maxLength:buflen encoding:[NSString defaultCStringEncoding]];
     return;
   }
   int len = [data length];
@@ -131,6 +135,8 @@ HANDLE SWELL_CreateProcess(const char *exe, int nparams, const char **params)
     @catch (NSException *exception) { 
       [tsk release];
       tsk=0;
+    }
+    @catch (id ex) {
     }
   }
 
@@ -290,6 +296,13 @@ UINT_PTR SetTimer(HWND hwnd, UINT_PTR timerid, UINT rate, TIMERPROC tProc)
 void SWELL_RunRunLoop(int ms)
 {
   [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:ms*0.001]];
+}
+void SWELL_RunRunLoopEx(int ms, HWND hwndOnlyTimer)
+{
+  HWND h=g_swell_only_timerhwnd;
+  g_swell_only_timerhwnd = hwndOnlyTimer;
+  [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:ms*0.001]];
+  if (g_swell_only_timerhwnd == hwndOnlyTimer) g_swell_only_timerhwnd = h;
 }
 
 BOOL KillTimer(HWND hwnd, UINT_PTR timerid)

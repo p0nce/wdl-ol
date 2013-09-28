@@ -7,40 +7,42 @@ IParam::IParam()
 {
   memset(mName, 0, MAX_PARAM_NAME_LEN * sizeof(char));
   memset(mLabel, 0, MAX_PARAM_LABEL_LEN * sizeof(char));
+  memset(mParamGroup, 0, MAX_PARAM_LABEL_LEN * sizeof(char));
 }
 
 IParam::~IParam() {}
 
-void IParam::InitBool(const char* name, bool defaultVal, const char* label)
+void IParam::InitBool(const char* name, bool defaultVal, const char* label, const char* group)
 {
   if (mType == kTypeNone) mType = kTypeBool;
   
-  InitEnum(name, (defaultVal ? 1 : 0), 2);
+  InitEnum(name, (defaultVal ? 1 : 0), 2, label, group);
 
   SetDisplayText(0, "off");
   SetDisplayText(1, "on");
 }
 
-void IParam::InitEnum(const char* name, int defaultVal, int nEnums)
+void IParam::InitEnum(const char* name, int defaultVal, int nEnums, const char* label, const char* group)
 {
   if (mType == kTypeNone) mType = kTypeEnum;
   
-  InitInt(name, defaultVal, 0, nEnums - 1);
+  InitInt(name, defaultVal, 0, nEnums - 1, label, group);
 }
 
-void IParam::InitInt(const char* name, int defaultVal, int minVal, int maxVal, const char* label)
+void IParam::InitInt(const char* name, int defaultVal, int minVal, int maxVal, const char* label, const char* group)
 {
   if (mType == kTypeNone) mType = kTypeInt;
   
-  InitDouble(name, (double) defaultVal, (double) minVal, (double) maxVal, 1.0, label);
+  InitDouble(name, (double) defaultVal, (double) minVal, (double) maxVal, 1.0, label, group);
 }
 
-void IParam::InitDouble(const char* name, double defaultVal, double minVal, double maxVal, double step, const char* label)
+void IParam::InitDouble(const char* name, double defaultVal, double minVal, double maxVal, double step, const char* label, const char* group, double shape)
 {
   if (mType == kTypeNone) mType = kTypeDouble;
   
   strcpy(mName, name);
   strcpy(mLabel, label);
+  strcpy(mParamGroup, group);
   mValue = defaultVal;
   mMin = minVal;
   mMax = IPMAX(maxVal, minVal + step);
@@ -53,6 +55,8 @@ void IParam::InitDouble(const char* name, double defaultVal, double minVal, doub
   {
     ;
   }
+  
+  SetShape(shape);
 }
 
 void IParam::SetShape(double shape)
@@ -142,6 +146,11 @@ const char* IParam::GetLabelForHost()
 {
   const char* displayText = GetDisplayText((int) mValue);
   return (CSTR_NOT_EMPTY(displayText)) ? "" : mLabel;
+}
+
+const char* IParam::GetParamGroupForHost()
+{
+  return mParamGroup;
 }
 
 int IParam::GetNDisplayTexts()

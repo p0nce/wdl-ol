@@ -16,11 +16,12 @@
 *.db
 *.LSOverride
 *.xcworkspace
-*.xcuserdata
+*xcuserdata*
 *.xcschememanagement.plist
 build-*
 /IPlugExamples/*/*.vcxproj.user
 
+PCH/*
 VST3_SDK/*
 VST_SDK/*
 PT9_SDK/*
@@ -37,3 +38,5 @@ Icon?
 /WDL/IPlug/doc/
 /WorkProjects/
 IPlugExamples/build_errors.log
+
+/IPlugExamples/IPlugEEL/libEEL/build/

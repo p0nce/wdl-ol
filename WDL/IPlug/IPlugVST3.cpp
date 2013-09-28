@@ -53,11 +53,11 @@ IPlugVST3::IPlugVST3(IPlugInstanceInfo instanceInfo,
   }
 
   // initialize the bus labels
-  SetInputBusLabel(0, "main input");
+  SetInputBusLabel(0, "Main Input");
 
   if (mScChans)
   {
-    SetInputBusLabel(1, "aux input");
+    SetInputBusLabel(1, "Aux Input");
   }
 
   if (IsInst())
@@ -67,7 +67,7 @@ IPlugVST3::IPlugVST3(IPlugInstanceInfo instanceInfo,
 
     for (int i = 0; i < NOutChannels(); i+=2) // stereo buses only
     {
-      sprintf(label, "output %i", busNum+1);
+      sprintf(label, "Output %i", busNum+1);
       SetOutputBusLabel(busNum++, label);
     }
   }
@@ -135,8 +135,8 @@ tresult PLUGIN_API IPlugVST3::initialize (FUnknown* context)
 
     if(mDoesMidi)
     {
-      addEventInput (STR16("MIDI In"), 1);
-      //addEventOutput(STR16("MIDI Out"), 1);
+      addEventInput (STR16("MIDI Input"), 1);
+      //addEventOutput(STR16("MIDI Output"), 1);
     }
 
     if (NPresets())
@@ -165,6 +165,26 @@ tresult PLUGIN_API IPlugVST3::initialize (FUnknown* context)
       IParam *p = GetParam(i);
 
       int32 flags = 0;
+      UnitID unitID = kRootUnitId;
+      
+      const char* paramGroupName = p->GetParamGroupForHost();
+
+      if (CSTR_NOT_EMPTY(paramGroupName))
+      {        
+        for(int i = 0; i< mParamGroups.GetSize(); i++)
+        {
+          if(strcmp(paramGroupName, mParamGroups.Get(i)) == 0)
+          {
+            unitID = i+1;
+          }
+        }
+        
+        if (unitID == kRootUnitId) // new unit, nothing found, so add it
+        {
+          mParamGroups.Add(paramGroupName);
+          unitID = mParamGroups.GetSize();
+        }
+      }
 
       if (p->GetCanAutomate())
       {
@@ -183,7 +203,8 @@ tresult PLUGIN_API IPlugVST3::initialize (FUnknown* context)
                                                  p->GetMax(),
                                                  p->GetDefault(),
                                                  0, // continuous
-                                                 flags);
+                                                 flags,
+                                                 unitID);
 
           param->setPrecision (p->GetPrecision());
           parameters.addParameter(param);
@@ -194,9 +215,10 @@ tresult PLUGIN_API IPlugVST3::initialize (FUnknown* context)
         case IParam::kTypeBool:
         {
           StringListParameter* param = new StringListParameter (STR16(p->GetNameForHost()),
-              i,
-              STR16(p->GetLabelForHost()),
-              flags | ParameterInfo::kIsList);
+                                                                i,
+                                                                STR16(p->GetLabelForHost()),
+                                                                flags | ParameterInfo::kIsList,
+                                                                unitID);
 
           int nDisplayTexts = p->GetNDisplayTexts();
 
@@ -213,12 +235,12 @@ tresult PLUGIN_API IPlugVST3::initialize (FUnknown* context)
         default:
           break;
       }
-
     }
   }
 
   OnHostIdentified();
-
+  RestorePreset(0);
+  
   return result;
 }
 
@@ -603,6 +625,11 @@ tresult PLUGIN_API IPlugVST3::canProcessSampleSize(int32 symbolicSampleSize)
   return retval;
 }
 
+Steinberg::uint32 PLUGIN_API IPlugVST3::getLatencySamples () 
+{ 
+  return mLatency;
+} 
+
 #pragma mark -
 #pragma mark IEditController overrides
 
@@ -811,20 +838,43 @@ SpeakerArrangement IPlugVST3::getSpeakerArrForChans(int32 chans)
 #pragma mark -
 #pragma mark IUnitInfo overrides
 
+int32 PLUGIN_API IPlugVST3::getUnitCount()
+{
+  TRACE;
+  
+  return mParamGroups.GetSize() + 1;
+}
+
 tresult PLUGIN_API IPlugVST3::getUnitInfo(int32 unitIndex, UnitInfo& info)
 {
+  TRACE;
+  
+  if (unitIndex == 0) 
+  {
+    info.id = kRootUnitId;
+    info.parentUnitId = kNoParentUnitId;
+    UString name(info.name, 128);
+    name.fromAscii("Root Unit");
 #ifdef VST3_PRESET_LIST
-  info.id = kRootUnitId;
-  info.parentUnitId = kNoParentUnitId;
-  info.programListId = kPresetParam;
-
-  UString name(info.name, 128);
-  name.fromAscii("Factory Presets");
-
-  return kResultTrue;
+    info.programListId = kPresetParam;
 #else
-  return kResultFalse;
+    info.programListId = kNoProgramListId;
 #endif
+    return kResultTrue;
+  }
+  else if (unitIndex > 0 && mParamGroups.GetSize()) 
+  {
+    info.id = unitIndex;
+    info.parentUnitId = kRootUnitId;
+    info.programListId = kNoProgramListId;
+    
+    UString name(info.name, 128);
+    name.fromAscii(mParamGroups.Get(unitIndex-1));
+    
+    return kResultTrue;
+  }
+
+  return kResultFalse;
 }
 
 int32 PLUGIN_API IPlugVST3::getProgramListCount()
@@ -880,12 +930,6 @@ void IPlugVST3::EndInformHostOfParamChange(int idx)
   endEdit(idx);
 }
 
-void IPlugVST3::SetParameterFromGUI(int idx, double normalizedValue)
-{
-  Trace(TRACELOC, "%d:%f", idx, normalizedValue);
-  InformHostOfParamChange(idx, normalizedValue);
-}
-
 void IPlugVST3::GetTime(ITimeInfo* pTimeInfo)
 {
   //TODO: check these are all valid
@@ -927,10 +971,10 @@ void IPlugVST3::ResizeGraphics(int w, int h)
 
 void IPlugVST3::SetLatency(int latency)
 {
+  IPlugBase::SetLatency(latency);
+
   FUnknownPtr<IComponentHandler>handler(componentHandler);
-  handler->restartComponent (kLatencyChanged);
-  
-  IPlugBase::SetLatency(latency); // will update delay time
+  handler->restartComponent(kLatencyChanged);  
 }
 
 void IPlugVST3::PopupHostContextMenuForParam(int param, int x, int y)

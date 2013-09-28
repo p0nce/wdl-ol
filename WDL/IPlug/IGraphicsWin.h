@@ -28,10 +28,13 @@ public:
   void* OpenWindow(void* pParentWnd);
   void CloseWindow();
   bool WindowIsOpen() { return (mPlugWnd); }
+  
+  void UpdateTooltips() {}
 
   void HostPath(WDL_String* pPath);
   void PluginPath(WDL_String* pPath);
   void DesktopPath(WDL_String* pPath);
+  void AppSupportPath(WDL_String* pPath);
 
   void PromptForFile(WDL_String* pFilename, EFileAction action = kFileOpen, WDL_String* pDir = 0, char* extensions = "");   // extensions = "txt wav" for example.
   bool PromptForColor(IColor* pColor, char* prompt = "");
@@ -55,14 +58,20 @@ public:
 protected:
   LICE_IBitmap* OSLoadBitmap(int ID, const char* name);
 
+  void SetTooltip(const char* tooltip);
+  void ShowTooltip();
+  void HideTooltip();
+
 private:
   HINSTANCE mHInstance;
-  HWND mPlugWnd, mParamEditWnd;
+  HWND mPlugWnd, mParamEditWnd, mTooltipWnd;
   // Ed = being edited manually.
   IControl* mEdControl;
   IParam* mEdParam;
   WNDPROC mDefEditProc;
   int mParamEditMsg;
+  bool mShowingTooltip;
+  int mTooltipIdx;
   int mIdleTicks;
   COLORREF* mCustomColorStorage;
 

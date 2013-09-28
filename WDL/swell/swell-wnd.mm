@@ -31,6 +31,7 @@
 #include "../mutex.h"
 #include "../ptrlist.h"
 #include "../queue.h"
+#include "../wdlcstring.h"
 
 #include "swell-dlggen.h"
 #include "swell-internal.h"
@@ -56,8 +57,6 @@ static void InvalidateSuperViews(NSView *view);
   InvalidateSuperViews(self); \
   }
 
-
-char* lstrcpyn(char* dest, const char* src, int l);
 
 int g_swell_want_nice_style = 1;
 static void *SWELL_CStringToCFString_FilterPrefix(const char *str)
@@ -680,7 +679,7 @@ STANDARD_CONTROL_NEEDSDISPLAY_IMPL
     m_start_item_clickmode=0;
     if (m_start_item >=0 && (m_fastClickMask&(1<<m_start_subitem)))
     {
-      NMLISTVIEW nmlv={{(HWND)self,[self tag], NM_CLICK}, m_start_item, m_start_subitem, 0, 0, 0, {pt.x, pt.y}, };
+      NMLISTVIEW nmlv={{(HWND)self,[self tag], NM_CLICK}, m_start_item, m_start_subitem, 0, 0, 0, {(int)floor(pt.x), (int)floor(pt.y)}, };
       SWELL_ListView_Row *row=m_items->Get(nmlv.iItem);
       if (row)
         nmlv.lParam = row->m_param;
@@ -759,7 +758,7 @@ STANDARD_CONTROL_NEEDSDISPLAY_IMPL
     NSPoint pt=[theEvent locationInWindow];
     pt=[self convertPoint:pt fromView:nil];    
     int col = [self columnAtPoint:pt];
-    NMLISTVIEW nmlv={{(HWND)self,[self tag], NM_CLICK}, [self rowAtPoint:pt], col, 0, 0, 0, {pt.x, pt.y}, };
+    NMLISTVIEW nmlv={{(HWND)self,[self tag], NM_CLICK}, [self rowAtPoint:pt], col, 0, 0, 0, {(int)floor(pt.x), (int)floor(pt.y)}, };
     SWELL_ListView_Row *row=m_items->Get(nmlv.iItem);
     if (row) nmlv.lParam = row->m_param;
     SendMessage((HWND)[self target],WM_NOTIFY,[self tag],(LPARAM)&nmlv);
@@ -784,7 +783,7 @@ STANDARD_CONTROL_NEEDSDISPLAY_IMPL
       [self selectRowIndexes:rows byExtendingSelection:NO];
     }       
     
-    NMLISTVIEW nmlv={{(HWND)self,[self tag], NM_RCLICK}, [self rowAtPoint:pt], [self columnAtPoint:pt], 0, 0, 0, {pt.x, pt.y}, };
+    NMLISTVIEW nmlv={{(HWND)self,[self tag], NM_RCLICK}, [self rowAtPoint:pt], [self columnAtPoint:pt], 0, 0, 0, {(int)floor(pt.x), (int)floor(pt.y)}, };
     if (SendMessage((HWND)[self target],WM_NOTIFY,nmlv.hdr.idFrom,(LPARAM)&nmlv)) wantContext=false;
   }
   if (wantContext)
@@ -1495,7 +1494,7 @@ LRESULT SendMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         }
         return 0;
     }
-    else if ((msg == EM_SETSEL || msg == EM_GETSEL) && ([obj isKindOfClass:[NSTextField class]]))
+    else if ((msg == EM_SETSEL || msg == EM_GETSEL || msg == EM_SETPASSWORDCHAR) && ([obj isKindOfClass:[NSTextField class]]))
     { 
       if (msg == EM_GETSEL)
       {
@@ -1522,6 +1521,11 @@ LRESULT SendMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
           if (lParam>sl) lParam=sl;      
           if (text) [text setSelectedRange:NSMakeRange(wParam, max(lParam-wParam,0))]; // and set the range
         }
+      }
+      else if (msg == EM_SETPASSWORDCHAR)
+      {
+        // not implemented, because it requires replacing obj within its parent window
+        // instead caller explicitly destroy the edit control and create a new one with ES_PASSWORD
       }
       return 0;
     }
@@ -2316,7 +2320,7 @@ BOOL GetDlgItemText(HWND hwnd, int idx, char *text, int textlen)
   if ([(id)poo respondsToSelector:@selector(onSwellGetText)])
   {  
     const char *p=(const char *)[(SWELL_hwndChild*)poo onSwellGetText];
-    lstrcpyn(text,p?p:"",textlen);
+    lstrcpyn_safe(text,p?p:"",textlen);
     return TRUE;
   }
   
@@ -2981,20 +2985,24 @@ STANDARD_CONTROL_NEEDSDISPLAY_IMPL
     {
       HGDIOBJ__* obj = (HGDIOBJ__*)wParam;
       if (obj && obj->type == TYPE_FONT)
-      {        
-#ifndef __LP64__
-        if (obj->font_style)
+      {
+        if (obj->ct_FontRef)
+        {
+          [self setFont:(NSFont *)obj->ct_FontRef];
+        }
+#ifdef SWELL_ATSUI_TEXT_SUPPORT
+        else if (obj->atsui_font_style)
         {
           ATSUFontID fontid = kATSUInvalidFontID;      
           Fixed fsize = 0;          
           Boolean isbold = NO;
           Boolean isital = NO;
           Boolean isunder = NO;          
-          if (ATSUGetAttribute(obj->font_style, kATSUFontTag, sizeof(ATSUFontID), &fontid, 0) == noErr &&
-              ATSUGetAttribute(obj->font_style, kATSUSizeTag, sizeof(Fixed), &fsize, 0) == noErr && fsize &&
-              ATSUGetAttribute(obj->font_style, kATSUQDBoldfaceTag, sizeof(Boolean), &isbold, 0) == noErr && 
-              ATSUGetAttribute(obj->font_style, kATSUQDItalicTag, sizeof(Boolean), &isital, 0) == noErr &&
-              ATSUGetAttribute(obj->font_style, kATSUQDUnderlineTag, sizeof(Boolean), &isunder, 0) == noErr)
+          if (ATSUGetAttribute(obj->atsui_font_style, kATSUFontTag, sizeof(ATSUFontID), &fontid, 0) == noErr &&
+              ATSUGetAttribute(obj->atsui_font_style, kATSUSizeTag, sizeof(Fixed), &fsize, 0) == noErr && fsize &&
+              ATSUGetAttribute(obj->atsui_font_style, kATSUQDBoldfaceTag, sizeof(Boolean), &isbold, 0) == noErr && 
+              ATSUGetAttribute(obj->atsui_font_style, kATSUQDItalicTag, sizeof(Boolean), &isital, 0) == noErr &&
+              ATSUGetAttribute(obj->atsui_font_style, kATSUQDUnderlineTag, sizeof(Boolean), &isunder, 0) == noErr)
           {
             char name[255];
             name[0]=0;
@@ -3019,13 +3027,7 @@ STANDARD_CONTROL_NEEDSDISPLAY_IMPL
             }
           }            
         }
-        else 
 #endif
-        if (obj->fontdict)
-        {        
-          NSFont* font = (NSFont*)[obj->fontdict objectForKey:NSFontAttributeName];
-          if (font) [self setFont:font];
-        }
       }
     }
     return 0;
@@ -3377,7 +3379,10 @@ HWND SWELL_MakeControl(const char *cname, int idx, const char *classname, int st
 
     {
       NSTableColumn *col=[[NSTableColumn alloc] init];
-      [col setDataCell:[[[SWELL_ListViewCell alloc] initTextCell:@""] autorelease]];
+      SWELL_ListViewCell *cell = [[SWELL_ListViewCell alloc] initTextCell:@""];
+      [col setDataCell:cell];
+      [cell release];
+
       [col setWidth:(int)ceil(max(tr.size.width,300.0))];
       [col setEditable:NO];
       [[col dataCell] setWraps:NO];     
@@ -4027,7 +4032,7 @@ bool ListView_GetItem(HWND h, LVITEM *item)
     if (item->mask & LVIF_TEXT) if (item->pszText && item->cchTextMax>0)
     {
       char *p=row->m_vals.Get(item->iSubItem);
-      lstrcpyn(item->pszText,p?p:"",item->cchTextMax);
+      lstrcpyn_safe(item->pszText,p?p:"",item->cchTextMax);
     }
       if (item->mask & LVIF_STATE)
       {
@@ -4949,7 +4954,7 @@ UINT DragQueryFile(HDROP hDrop, UINT wf, char *buf, UINT bufsz)
       {
         if (buf)
         {
-          lstrcpyn(buf,p,bufsz);
+          lstrcpyn_safe(buf,p,bufsz);
           rv=strlen(buf);
         }
         else rv=strlen(p);
@@ -5441,7 +5446,7 @@ BOOL TreeView_GetItem(HWND hwnd, LPTVITEM pitem)
   pitem->lParam = ti->m_param;
   if ((pitem->mask&TVIF_TEXT)&&pitem->pszText&&pitem->cchTextMax>0)
   {
-    lstrcpyn(pitem->pszText,ti->m_value?ti->m_value:"",pitem->cchTextMax);
+    lstrcpyn_safe(pitem->pszText,ti->m_value?ti->m_value:"",pitem->cchTextMax);
   }
   pitem->state=0;
   
@@ -5832,8 +5837,8 @@ bool SWELL_HandleMouseEvent(NSEvent *evt)
       NSView *hitv=[cview hitTest:lpt];
       lpt = [w convertBaseToScreen:lpt];
       
-      int xpos=(int)(lpt.x+0.5);
-      int ypos=(int)(lpt.y+0.5);
+      int xpos=(int)floor(lpt.x);
+      int ypos=(int)floor(lpt.y);
       
       while (hitv)
       {

@@ -91,7 +91,6 @@ void NSEEL_addfunctionex2(const char *name, int nparms, char *code_startaddr, in
 void NSEEL_quit();
 
 int *NSEEL_getstats(); // returns a pointer to 5 ints... source bytes, static code bytes, call code bytes, data bytes, number of code handles
-EEL_F *NSEEL_getglobalregs();
 
 typedef void *NSEEL_VMCTX;
 typedef void *NSEEL_CODEHANDLE;
@@ -105,6 +104,7 @@ void NSEEL_VM_remove_all_nonreg_vars(NSEEL_VMCTX _ctx);
 void NSEEL_VM_enumallvars(NSEEL_VMCTX ctx, int (*func)(const char *name, EEL_F *val, void *ctx), void *userctx); // return false from func to stop
 
 EEL_F *NSEEL_VM_regvar(NSEEL_VMCTX ctx, const char *name); // register a variable (before compilation)
+int  NSEEL_VM_get_var_refcnt(NSEEL_VMCTX _ctx, const char *name); // returns -1 if not registered, or >=0
 
 void NSEEL_VM_freeRAM(NSEEL_VMCTX ctx); // clears and frees all (VM) RAM used
 void NSEEL_VM_freeRAMIfCodeRequested(NSEEL_VMCTX); // call after code to free the script-requested memory

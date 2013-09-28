@@ -322,10 +322,8 @@ struct HTREEITEM__
 - (void)accessibilitySetValue:(id)value forAttribute:(NSString *)attribute;
 
 // parameterized attribute methods
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_3
 - (NSArray *)accessibilityParameterizedAttributeNames;
 - (id)accessibilityAttributeValue:(NSString *)attribute forParameter:(id)parameter;
-#endif
 
 // action methods
 - (NSArray *)accessibilityActionNames;
@@ -442,6 +440,14 @@ struct HTREEITEM__
 
 // GDI internals
 
+
+// 10.4 doesn't support CoreText, so allow ATSUI if targetting 10.4 SDK
+#if MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_10_5
+#ifndef __LP64__
+#define SWELL_ATSUI_TEXT_SUPPORT
+#endif
+#endif
+
 struct HGDIOBJ__
 {
   int type;
@@ -453,17 +459,19 @@ struct HGDIOBJ__
   int wid;
   NSImage *bitmapptr;  
   
-  // used by font
-  // if using NSString to draw text
-  NSMutableDictionary *fontdict;
-  char font_quality;
-  // if using ATSU to draw text (faster)
-  ATSUStyle font_style;
-  
+  NSMutableDictionary *__old_fontdict; // unused, for ABI compat
+  //
+  // if ATSUI used, meaning IsCoreTextSupported() returned false
+  ATSUStyle atsui_font_style;
+
   float font_rotation;
 
   bool _infreelist;
   struct HGDIOBJ__ *_next;
+ 
+  // if using CoreText to draw text
+  void *ct_FontRef;
+  char font_quality;
 };
 
 struct HDC__ {
@@ -473,7 +481,7 @@ struct HDC__ {
   HGDIOBJ__ *curbrush;
   HGDIOBJ__ *curfont;
   
-  NSColor *curtextcol; // text color as NSColor
+  NSColor *__old_nstextcol; // provided for ABI compat, but unused
   int cur_text_color_int; // text color as int
   
   int curbkcol;
@@ -483,6 +491,8 @@ struct HDC__ {
   void *GLgfxctx; // optionally set
   bool _infreelist;
   struct HDC__ *_next;
+
+  CGColorRef curtextcol; // text color as CGColor
 };
 
 
@@ -623,8 +633,13 @@ struct HGDIOBJ__
 
   int color;
   int wid;
+
   struct HGDIOBJ__ *_next;
   bool _infreelist;
+#ifdef SWELL_FREETYPE
+  void *fontface; // FT_Face
+#endif
+
 };
 
 
@@ -671,6 +686,7 @@ typedef struct
 
   int (*SWELL_dllMain)(HINSTANCE, DWORD,LPVOID); //last parm=SWELLAPI_GetFunc
   BOOL (*dllMain)(HINSTANCE, DWORD, LPVOID);
+  void *lastSymbolRequested;
 } SWELL_HINSTANCE;
 
 

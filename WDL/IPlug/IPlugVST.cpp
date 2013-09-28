@@ -116,7 +116,7 @@ void IPlugVST::InformHostOfProgramChange()
 
 inline VstTimeInfo* GetTimeInfo(audioMasterCallback hostCallback, AEffect* pAEffect, int filter = 0)
 {
-#pragma warning(disable:4312)	// Pointer size cast mismatch.
+#pragma warning(disable:4312) // Pointer size cast mismatch.
   VstTimeInfo* pTI = (VstTimeInfo*) hostCallback(pAEffect, audioMasterGetTime, 0, filter, 0, 0);
 #pragma warning(default:4312)
   if (pTI && (!filter || (pTI->flags & filter)))
@@ -283,17 +283,18 @@ bool IPlugVST::SendMidiMsg(IMidiMsg* pMsg)
   return SendVSTEvent((VstEvent*) &midiEvent);
 }
 
-bool IPlugVST::SendMidiMsgs(WDL_TypedBuf<IMidiMsg>* pMsgs)
-{
-  // Todo: bundle and SendVSTEvents.
-  bool rc = true;
-  int n = pMsgs->GetSize();
-  IMidiMsg* pMsg = pMsgs->Get();
-  for (int i = 0; i < n; ++i, ++pMsg)
-  {
-    rc &= SendMidiMsg(pMsg);
-  }
-  return rc;
+bool IPlugVST::SendSysEx(ISysEx* pSysEx)
+{ 
+  VstMidiSysexEvent sysexEvent;
+  memset(&sysexEvent, 0, sizeof(VstMidiSysexEvent));
+
+  sysexEvent.type = kVstSysExType;
+  sysexEvent.byteSize = sizeof(VstMidiSysexEvent);
+  sysexEvent.deltaFrames = pSysEx->mOffset;
+  sysexEvent.dumpBytes = pSysEx->mSize;
+  sysexEvent.sysexDump = (char*)pSysEx->mData;
+
+  return SendVSTEvent((VstEvent*) &sysexEvent);
 }
 
 audioMasterCallback IPlugVST::GetHostCallback()
@@ -389,6 +390,20 @@ VstIntPtr VSTCALLBACK IPlugVST::VSTDispatcher(AEffect *pEffect, VstInt32 opCode,
       }
       return 0;
     }
+      //could implement effGetParameterProperties to group parameters, but can't find a host that supports it
+//    case effGetParameterProperties:
+//    {
+//      if (idx >= 0 && idx < _this->NParams())
+//      {
+//        VstParameterProperties* props = (VstParameterProperties*) ptr;
+//        
+//        props->flags = kVstParameterSupportsDisplayCategory;
+//        props->category = idx+1;
+//        props->numParametersInCategory = 1;
+//        strcpy(props->categoryLabel, "test");
+//      }
+//      return 1;
+//    }
     case effString2Parameter:
     {
       if (idx >= 0 && idx < _this->NParams())
@@ -569,9 +584,11 @@ VstIntPtr VSTCALLBACK IPlugVST::VSTDispatcher(AEffect *pEffect, VstInt32 opCode,
               //  msg.LogMsg();
               //#endif
             }
-            else
+            else if (pEvent->type == kVstSysExType) 
             {
-              _this->SendVSTEvent(pEvent); // Pass sysex messages through.
+              VstMidiSysexEvent* pSE = (VstMidiSysexEvent*) pEvent;
+              ISysEx sysex(pSE->deltaFrames, (const BYTE*)pSE->sysexDump, pSE->dumpBytes);
+              _this->ProcessSysEx(&sysex);
             }
           }
         }

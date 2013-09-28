@@ -10,6 +10,8 @@
 // MLTE is more customisable and doesn't have to have a blue focus rim, but
 // text doesn't centre properly and when you select the text and drag it behaves strangely
 
+// MLTE text entry code was adapted from expdigital's infinity api http://www.expdigital.co.uk/legacy2/developers.htm
+
 #ifndef USE_MLTE
   #define USE_MLTE 0
 #endif
@@ -33,6 +35,10 @@ public:
   void CreateTextEntry(IControl* pControl, IText* pText, IRECT* pTextRect, const char* pString, IParam* pParam);
 
   void EndUserInput(bool commit);
+  
+protected:
+  void ShowTooltip();
+  void HideTooltip();
 
 private:
   IGraphicsMac* mGraphicsMac;
@@ -57,6 +63,10 @@ private:
   IParam* mEdParam;
   int mPrevX, mPrevY;
   short mLeftOffset, mTopOffset; // only for RTAS
+  
+  bool mShowingTooltip;
+  int mTooltipIdx, mTooltipTimer;
+  const char* mTooltip;
 
 public:
   static pascal OSStatus MainEventHandler(EventHandlerCallRef pHandlerCall, EventRef pEvent, void* pGraphicsCarbon);

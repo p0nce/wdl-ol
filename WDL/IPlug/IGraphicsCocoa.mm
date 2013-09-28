@@ -196,6 +196,11 @@ inline IMouseMod GetRightMouseMod(NSEvent* pEvent)
 }
 @end
 
+inline int GetMouseOver(IGraphicsMac* pGraphics)
+{
+	return pGraphics->GetMouseOver();
+}
+
 @implementation IGRAPHICS_COCOA
 
 - (id) init
@@ -561,14 +566,22 @@ inline IMouseMod GetRightMouseMod(NSEvent* pEvent)
 
   [[mTextFieldView cell] setLineBreakMode: NSLineBreakByTruncatingTail];
   [mTextFieldView setAllowsEditingTextAttributes:NO];
-  [mTextFieldView setFocusRingType:NSFocusRingTypeNone];
   [mTextFieldView setTextColor:ToNSColor(&pText->mTextEntryFGColor)];
   [mTextFieldView setBackgroundColor:ToNSColor(&pText->mTextEntryBGColor)];
 
   [mTextFieldView setStringValue: ToNSString(pString)];
-  [mTextFieldView setBordered: NO];
-  [mTextFieldView setDelegate: self];
 
+#ifndef COCOA_TEXTENTRY_BORDERED
+  [mTextFieldView setBordered: NO];
+  [mTextFieldView setFocusRingType:NSFocusRingTypeNone];
+#endif
+  
+#if __MAC_OS_X_VERSION_MAX_ALLOWED > 1060
+  [mTextFieldView setDelegate: (id<NSTextFieldDelegate>) self];
+#else
+  [mTextFieldView setDelegate: self];
+#endif
+  
   [self addSubview: mTextFieldView];
   NSWindow* pWindow = [self window];
   [pWindow makeKeyAndOrderFront:nil];
@@ -589,6 +602,20 @@ inline IMouseMod GetRightMouseMod(NSEvent* pEvent)
   mTextFieldView = 0;
   mEdControl = 0;
   mEdParam = 0;
+}
+
+- (NSString*) view: (NSView*) pView stringForToolTip: (NSToolTipTag) tag point: (NSPoint) point userData: (void*) pData
+{
+  int c = mGraphics ? GetMouseOver(mGraphics) : -1;
+  if (c < 0) return @"";
+  
+  const char* tooltip = mGraphics->GetControl(c)->GetTooltip();
+  return CSTR_NOT_EMPTY(tooltip) ? ToNSString((const char*) tooltip) : @"";
+}
+
+- (void) registerToolTip: (IRECT*) pRECT
+{
+  [self addToolTipRect: ToNSRect(mGraphics, pRECT) owner: self userData: nil];
 }
 
 @end

@@ -53,20 +53,18 @@ public:
                   bool plugIsInst = false,
                   int plugScChans = 0);
 
-  void BeginInformHostOfParamChange(int idx);
-  void InformHostOfParamChange(int idx, double normalizedValue);
-  void EndInformHostOfParamChange(int idx);
+  // these methods aren't needed in standalones but they are pure virtual in IPlugBase so must have a NO-OP here
+  void BeginInformHostOfParamChange(int idx) {};
+  void InformHostOfParamChange(int idx, double normalizedValue) {};
+  void EndInformHostOfParamChange(int idx) {};
+  void InformHostOfProgramChange() {};
 
-  void InformHostOfProgramChange();
-
-  int GetSamplePos();   // Samples since start of project.
-  double GetTempo();
-  void GetTimeSig(int* pNum, int* pDenom);
-  void GetTime(ITimeInfo* pTimeInfo);
+  int GetSamplePos() { return 0; }   // Samples since start of project.
+  double GetTempo() { return DEFAULT_TEMPO; }
+  void GetTimeSig(int* pNum, int* pDenom) { return; }
+  void GetTime(ITimeInfo* pTimeInfo) { return; }
 
   void ResizeGraphics(int w, int h);
-  void SetSampleRate(double sampleRate);
-  void SetBlockSize(int blockSize);
 
   #ifdef OS_IOS
   void LockMutexAndProcessSingleReplacing(float** inputs, float** outputs, int nFrames);
@@ -76,7 +74,7 @@ public:
 
 protected:
   bool SendMidiMsg(IMidiMsg* pMsg);
-  bool SendMidiMsgs(WDL_TypedBuf<IMidiMsg>* pMsgs);
+  bool SendSysEx(ISysEx* pSysEx);
 
 private:
   bool mDoesMidi;

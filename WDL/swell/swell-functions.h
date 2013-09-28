@@ -729,6 +729,10 @@ SWELL_API_DEFINE(void, SWELL_MessageQueue_Clear,(HWND h))
 */
 #ifdef SWELL_TARGET_OSX
 SWELL_API_DEFINE(int, SWELL_MacKeyToWindowsKey,(void *nsevent, int *flags))
+
+  // ex is the same as normal, except if mode=1 it does more processing of raw keys w/ modifiers
+  // and also if nsevent==NULL current event is used
+SWELL_API_DEFINE(int, SWELL_MacKeyToWindowsKeyEx,(void *nsevent, int *flags, int mode))
 #endif
 SWELL_API_DEFINE(int,SWELL_KeyToASCII,(int wParam, int lParam, int *newflags))
 
@@ -844,10 +848,15 @@ SWELL_API_DEFINE(void, GlobalUnlock,(HANDLE h))
 SWELL_API_DEFINE(void, GlobalFree,(HANDLE h))
 
 
-
 SWELL_API_DEFINE(HANDLE,CreateThread,(void *TA, DWORD stackSize, DWORD (*ThreadProc)(LPVOID), LPVOID parm, DWORD cf, DWORD *tidOut))
 SWELL_API_DEFINE(HANDLE,CreateEvent,(void *SA, BOOL manualReset, BOOL initialSig, const char *ignored))
 SWELL_API_DEFINE(HANDLE,CreateEventAsSocket,(void *SA, BOOL manualReset, BOOL initialSig, const char *ignored))
+
+
+#ifdef _beginthreadex
+#undef _beginthreadex
+#endif
+#define _beginthreadex(a,b,c,d,e,f) ((UINT_PTR)CreateThread(a,b,(unsigned (*)(LPVOID))(c),d,e,(DWORD*)(f)))
 
 SWELL_API_DEFINE(DWORD,GetCurrentThreadId,())
 SWELL_API_DEFINE(DWORD,WaitForSingleObject,(HANDLE hand, DWORD msTO))

@@ -71,7 +71,10 @@ LICE_IBitmap *LICE_LoadPNG(const char *filename, LICE_IBitmap *bmp)
     png_set_expand_gray_1_2_4_to_8(png_ptr);
 
   if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS)) 
+  {
     png_set_tRNS_to_alpha(png_ptr);
+    color_type |= PNG_COLOR_MASK_ALPHA;
+  }
 
   if (bit_depth == 16)
     png_set_strip_16(png_ptr);
@@ -151,7 +154,8 @@ static void staticPngReadFunc(png_structp png_ptr, png_bytep data, png_size_t le
   pngReadStruct *readStruct = (pngReadStruct *)png_get_io_ptr(png_ptr);
   memset(data, 0, length);
 
-  int l = min((int)length, readStruct->len);
+  int l = (int)length;
+  if (l > readStruct->len) l = readStruct->len;
   memcpy(data, readStruct->data, l);
   readStruct->data += l;
   readStruct->len -= l;
@@ -241,7 +245,10 @@ LICE_IBitmap *LICE_LoadPNGFromMemory(const void *data_in, int buflen, LICE_IBitm
     png_set_expand_gray_1_2_4_to_8(png_ptr);
 
   if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS)) 
+  {
     png_set_tRNS_to_alpha(png_ptr);
+    color_type |= PNG_COLOR_MASK_ALPHA;
+  }
 
   if (bit_depth == 16)
     png_set_strip_16(png_ptr);
@@ -355,4 +362,4 @@ public:
 
 };
 
-static LICE_PNGLoader LICE_pngldr;
+LICE_PNGLoader LICE_pngldr;

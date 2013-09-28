@@ -154,7 +154,22 @@ static int xlateKey(int msg, int wParam, int lParam)
 	    case VK_F11: return KEY_F11;
 	    case VK_F12: return KEY_F12;
 #ifndef _WIN32
-      case VK_SUBTRACT: return (GetAsyncKeyState(VK_SHIFT)&0x8000)?'_':'-'; // numpad -
+            case VK_SUBTRACT: return '-'; // numpad -
+            case VK_ADD: return '+';
+            case VK_MULTIPLY: return '*';
+            case VK_DIVIDE: return '/';
+            case VK_DECIMAL: return '.';
+            case VK_NUMPAD0: return '0';
+            case VK_NUMPAD1: return '1';
+            case VK_NUMPAD2: return '2';
+            case VK_NUMPAD3: return '3';
+            case VK_NUMPAD4: return '4';
+            case VK_NUMPAD5: return '5';
+            case VK_NUMPAD6: return '6';
+            case VK_NUMPAD7: return '7';
+            case VK_NUMPAD8: return '8';
+            case VK_NUMPAD9: return '9';
+            case (32768|VK_RETURN): return VK_RETURN;
 #endif
     }
     
@@ -178,7 +193,7 @@ static int xlateKey(int msg, int wParam, int lParam)
           }
         }
     }
-	}
+  }
     
 #ifdef _WIN32 // todo : fix for nonwin32
   if (msg == WM_CHAR)
@@ -186,7 +201,6 @@ static int xlateKey(int msg, int wParam, int lParam)
     if(wParam>=32) return wParam;
   }  
 #else
-  
   //osx/linux
   if (wParam >= 32)
   {
@@ -194,26 +208,9 @@ static int xlateKey(int msg, int wParam, int lParam)
     {
       if (wParam>='A' && wParam<='Z') 
       {
-        if ((GetAsyncKeyState(VK_MENU)&0x8000)) wParam -= 'A'-1;
+        if ((GetAsyncKeyState(VK_LWIN)&0x8000)) wParam -= 'A'-1;
         else
           wParam += 'a'-'A';
-      }
-    }
-    else
-    {
-      if (wParam=='-') wParam='_';
-      else if (wParam>='0' && wParam<='9')
-      {
-        if (wParam=='0') wParam = ')';
-        else if (wParam=='1') wParam = '!';
-        else if (wParam=='2') wParam = '@';
-        else if (wParam=='3') wParam = '#';
-        else if (wParam=='4') wParam = '$';
-        else if (wParam=='5') wParam = '%';
-        else if (wParam=='6') wParam = '^';
-        else if (wParam=='7') wParam = '&';
-        else if (wParam=='8') wParam = '*';
-        else if (wParam=='9') wParam = '(';
       }
     }
     return wParam;
@@ -270,6 +267,14 @@ LRESULT CALLBACK cursesWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lP
 	return 0;
 #ifdef WIN32_CONSOLE_KBQUEUE
   case WM_CHAR: case WM_KEYDOWN: 
+
+#ifdef __APPLE__
+        {
+          int f=0;
+          wParam = SWELL_MacKeyToWindowsKeyEx(NULL,&f,1);
+          lParam=f;
+        }
+#endif
 
     {
       int a=xlateKey(uMsg,wParam,lParam);
@@ -391,10 +396,6 @@ LRESULT CALLBACK cursesWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lP
             HBRUSH bgbrushes[COLOR_PAIRS << NUM_ATTRBITS];
             for(y=0;y<sizeof(bgbrushes)/sizeof(bgbrushes[0]);y++) bgbrushes[y] = CreateSolidBrush(ctx->colortab[y][1]);
 
-#ifdef _WIN32
-            int win_cv=(GetVersion()&0xFF);
-#endif
-
             int cstate=ctx->m_cursor_state;
             if (ctx->m_cursor_y != ctx->m_cursor_state_ly ||
                 ctx->m_cursor_x != ctx->m_cursor_state_lx)
@@ -455,7 +456,6 @@ LRESULT CALLBACK cursesWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lP
                 {
                   #ifdef _WIN32
                     int txpos = xpos;
-                    if (win_cv >= 6) ++txpos; // absolutely no idea why this is needed
                     TextOut(hdc,txpos,ypos,isNotBlank ? p : " ",1);
                   #else
                     RECT tr={xpos,ypos,xpos+32,ypos+32};
@@ -567,7 +567,7 @@ static void reInitializeContext(win32CursesCtx *ctx)
                         ANSI_CHARSET,
                         OUT_DEFAULT_PRECIS,
                         CLIP_DEFAULT_PRECIS,
-                        DEFAULT_QUALITY,
+                        NONANTIALIASED_QUALITY,//DEFAULT_QUALITY,
 #ifdef _WIN32
                         FF_MODERN,
 #else

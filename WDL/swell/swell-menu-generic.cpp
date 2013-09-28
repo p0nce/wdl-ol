@@ -30,6 +30,7 @@
 #include "swell-internal.h"
 
 #include "../ptrlist.h"
+#include "../wdlcstring.h"
 
 HMENU__ *HMENU__::Duplicate()
 {
@@ -249,7 +250,7 @@ BOOL GetMenuItemInfo(HMENU hMenu, int pos, BOOL byPos, MENUITEMINFO *mi)
     mi->fType = item->fType;
     if (item->fType == MFT_STRING && mi->dwTypeData && mi->cch)
     {
-      lstrcpyn(mi->dwTypeData,item->dwTypeData?item->dwTypeData:"",mi->cch);
+      lstrcpyn_safe(mi->dwTypeData,item->dwTypeData?item->dwTypeData:"",mi->cch);
     }
   }
   
@@ -445,7 +446,8 @@ static LRESULT WINAPI submenuWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM
     case WM_TIMER:
       if (wParam==1)
       {
-        HWND h = GetFocus();
+        HWND GetFocusIncludeMenus();
+        HWND h = GetFocusIncludeMenus();
         if (h!=hwnd)
         {
           int a = h ? m_trackingMenus.Find(h) : -1;
@@ -458,6 +460,7 @@ static LRESULT WINAPI submenuWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM
         int a = m_trackingMenus.Find(hwnd);
         m_trackingMenus.Delete(a);
         if (m_trackingMenus.Get(a)) DestroyWindow(m_trackingMenus.Get(a));
+        RemoveProp(hwnd,"SWELL_MenuOwner");
       }
     break;
     case WM_LBUTTONUP:
@@ -482,7 +485,9 @@ static LRESULT WINAPI submenuWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM
               m_trackingPt.x=r.right;
               m_trackingPt.y=r.top + which*itemheight;
               ClientToScreen(hwnd,&m_trackingPt);
-              submenuWndProc(new HWND__(NULL,0,NULL,"menu",false,submenuWndProc,NULL),WM_CREATE,0,(LPARAM)inf->hSubMenu);
+              HWND hh;
+              submenuWndProc(hh=new HWND__(NULL,0,NULL,"menu",false,submenuWndProc,NULL),WM_CREATE,0,(LPARAM)inf->hSubMenu);
+              SetProp(hh,"SWELL_MenuOwner",GetProp(hh,"SWELL_MenuOwner"));
             }
             else if (inf->wID) m_trackingRet = inf->wID;
           }
@@ -505,16 +510,20 @@ int TrackPopupMenu(HMENU hMenu, int flags, int xpos, int ypos, int resvd, HWND h
   m_trackingRet=-1;
   m_trackingPt.x=xpos;
   m_trackingPt.y=ypos;
-  submenuWndProc(new HWND__(NULL,0,NULL,"menu",false,submenuWndProc,NULL),WM_CREATE,0,(LPARAM)hMenu);
 
-  printf("enter trackpopupmenu loop\n");
+//  HWND oldFoc = GetFocus();
+ // bool oldFoc_child = oldFoc && (IsChild(hwnd,oldFoc) || oldFoc == hwnd || oldFoc==GetParent(hwnd));
+
+  HWND hh;
+  submenuWndProc(hh=new HWND__(NULL,0,NULL,"menu",false,submenuWndProc,NULL),WM_CREATE,0,(LPARAM)hMenu);
+  SetProp(hh,"SWELL_MenuOwner",(HANDLE)hwnd);
+
   while (m_trackingRet<0 && m_trackingMenus.GetSize())
   {
     void SWELL_RunMessageLoop();
     SWELL_RunMessageLoop();
     Sleep(10);
   }
-  printf("leave trackpopupmenu loop\n");
 
   int x=m_trackingMenus.GetSize()-1;
   while (x>=0)
@@ -524,6 +533,9 @@ int TrackPopupMenu(HMENU hMenu, int flags, int xpos, int ypos, int resvd, HWND h
     if (h) DestroyWindow(h);
     x--;
   }
+
+//  if (oldFoc_child) SetFocus(oldFoc);
+
   if (!(flags&TPM_NONOTIFY) && m_trackingRet>0) 
     SendMessage(hwnd,WM_COMMAND,m_trackingRet,0);
   

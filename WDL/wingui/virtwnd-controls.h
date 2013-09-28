@@ -46,6 +46,11 @@ extern bool WDL_STYLE_AllowSliderMouseWheel();
 extern int WDL_STYLE_GetSliderDynamicCenterPos();
 
 
+// functions for handling knob drawing in non-vwnds
+extern WDL_VirtualWnd_BGCfg *vwnd_slider_getknobimageforsize(WDL_VirtualWnd_BGCfg *knoblist, int nknoblist,int *vieww, int *viewh, int *ksw, int *ksh, int *ks_offs);
+extern void vwnd_slider_drawknobstack(LICE_IBitmap *drawbm, double val, WDL_VirtualWnd_BGCfg *knobimage, int ksw, int ksh, int ks_offs, int dx, int dy, int dw, int dh, double alpha=1.0f);
+
+
 /* recommended defaults for the above:
 
 int WDL_STYLE_WantGlobalButtonBorders() { return 0; }
@@ -92,14 +97,15 @@ class WDL_VirtualIconButton : public WDL_VWnd
     void SetIsButton(bool isbutton) { m_is_button=isbutton; }
     bool GetIsButton() { return m_is_button; }
 
-    void SetImmediate(bool immediate) { m_immediate=true; } // send message on mousedown, not mouseup
+    void SetImmediate(bool immediate) { m_immediate=immediate; } // send message on mousedown, not mouseup
 
     void SetBGCol1Callback(int msg) { m_bgcol1_msg=msg; }
 
     void SetForceBorder(bool fb) { m_forceborder=fb; }
 
-    // only used if no icon config set
-    void SetTextLabel(const char *text, char align=0, LICE_IFont *font=NULL);
+    // only used if no icon config set, or if force is set
+    void SetTextLabel(const char *text); // no change of alignment etc
+    void SetTextLabel(const char *text, int align, LICE_IFont *font=NULL);
     const char* GetTextLabel() { return m_textlbl.Get(); }
     void SetMargins(int l, int r) { m_margin_l=l; m_margin_r=r; }
     void SetVMargins(int t, int b) { m_margin_t=t; m_margin_b=b; };
@@ -113,6 +119,7 @@ class WDL_VirtualIconButton : public WDL_VWnd
 
     void SetForceText(bool ft, int color=0) { m_forcetext=ft; m_forcetext_color=color; }
     bool GetForceText() { return m_forcetext; }
+    void SetTextLabelAlign(char align) { m_textalign=align; }
 
     void SetFont(LICE_IFont *font, LICE_IFont *vfont=NULL) { m_textfont=font; m_textfontv=vfont; }
     LICE_IFont *GetFont(bool vfont=false) { return vfont?m_textfontv:m_textfont; }
@@ -245,17 +252,22 @@ class WDL_VirtualSlider : public WDL_VWnd
     int GetSliderPosition();
     void SetSliderPosition(int pos);
     bool GetIsVert();
-    void SetNotifyOnClick(bool en) { m_sendmsgonclick=en; }
+    void SetNotifyOnClick(bool en) { m_sendmsgonclick=en; }  // default false
+
+    void SetDblClickCallback(int msg) { m_dblclickmsg=msg; }
+    int GetDblClickCallback() { return m_dblclickmsg; }
 
     void SetGrayed(bool grayed) { m_grayed = grayed; }
 
     void GetButtonSize(int *w, int *h);
 
-    void SetSkinImageInfo(WDL_VirtualSlider_SkinConfig *cfg, WDL_VirtualWnd_BGCfg *knobbg=NULL, WDL_VirtualWnd_BGCfg *knobbgsm=NULL)
+    void SetSkinImageInfo(WDL_VirtualSlider_SkinConfig *cfg, WDL_VirtualWnd_BGCfg *knobbg=NULL, WDL_VirtualWnd_BGCfg *knobbgsm=NULL, WDL_VirtualWnd_BGCfg *knobstacks=NULL, int nknobstacks=0)
     { 
       m_skininfo=cfg; 
       m_knobbg[0]=knobbgsm;
       m_knobbg[1]=knobbg;
+      m_knobstacks=knobstacks;
+      m_nknobstacks=nknobstacks;
     }
 
     void SetFGColors(int knobcol, int zlcol) { m_knob_color=knobcol; m_zl_color = zlcol; }
@@ -264,8 +276,13 @@ class WDL_VirtualSlider : public WDL_VWnd
   protected:
     WDL_VirtualSlider_SkinConfig *m_skininfo;
     WDL_VirtualWnd_BGCfg *m_knobbg[2];
+    WDL_VirtualWnd_BGCfg *m_knobstacks;
+    int m_nknobstacks;
 
-    int m_bgcol1_msg,m_scrollmsg;
+    int m_bgcol1_msg;
+    int m_scrollmsg;
+    int m_dblclickmsg;
+
     void OnMoveOrUp(int xpos, int ypos, int isup);
     int m_minr, m_maxr, m_center, m_pos;
 

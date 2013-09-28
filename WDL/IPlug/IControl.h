@@ -21,7 +21,8 @@ public:
   IControl(IPlugBase* pPlug, IRECT pR, int paramIdx = -1, IChannelBlend blendMethod = IChannelBlend::kBlendNone)
     : mPlug(pPlug), mRECT(pR), mTargetRECT(pR), mParamIdx(paramIdx), mValue(0.0), mDefaultValue(-1.0),
       mBlend(blendMethod), mDirty(true), mHide(false), mGrayed(false), mDisablePrompt(true), mDblAsSingleClick(false),
-      mClampLo(0.0), mClampHi(1.0), mMOWhenGreyed(false), mTextEntryLength(DEFAULT_TEXT_ENTRY_LEN) {}
+      mClampLo(0.0), mClampHi(1.0), mMOWhenGreyed(false), mTextEntryLength(DEFAULT_TEXT_ENTRY_LEN), 
+      mValDisplayControl(0), mNameDisplayControl(0), mTooltip(NULL) {}
 
   virtual ~IControl() {}
 
@@ -46,8 +47,12 @@ public:
   // Ask the IGraphics object to open an edit box so the user can enter a value for this control.
   void PromptUserInput();
   void PromptUserInput(IRECT* pTextRect);
+  
+  inline void SetTooltip(const char* tooltip) { mTooltip = tooltip; }
+  inline const char* GetTooltip() const { return mTooltip; }
 
   int ParamIdx() { return mParamIdx; }
+  IParam *GetParam() { return mPlug->GetParam(mParamIdx); }
   virtual void SetValueFromPlug(double value);
   void SetValueFromUserInput(double value);
   double GetValue() { return mValue; }
@@ -72,6 +77,9 @@ public:
   virtual bool IsHit(int x, int y) { return mTargetRECT.Contains(x, y); }
 
   void SetBlendMethod(IChannelBlend::EBlendMethod blendMethod) { mBlend = IChannelBlend(blendMethod); }
+  
+  void SetValDisplayControl(IControl* pValDisplayControl) { mValDisplayControl = pValDisplayControl; }
+  void SetNameDisplayControl(IControl* pNameDisplayControl) { mNameDisplayControl = pNameDisplayControl; }
 
   virtual void SetDirty(bool pushParamToPlug = true);
   virtual void SetClean();
@@ -87,16 +95,43 @@ public:
   // IPlugBase::OnIdle which is called from the audio processing thread.
   // Only active if USE_IDLE_CALLS is defined.
   virtual void OnGUIIdle() {}
-
+  
+  // a struct that contain a parameter index and normalized value
+  struct AuxParam 
+  {
+    double mValue;
+    int mParamIdx;
+    
+    AuxParam(int idx) : mParamIdx(idx)
+    {
+      assert(idx > -1); // no negative params please
+    }
+  };
+  
+  // return a pointer to the AuxParam instance at idx in the mAuxParams array
+  AuxParam* GetAuxParam(int idx);
+  // return the index of the auxillary parameter that holds the paramIdx
+  int AuxParamIdx(int paramIdx);
+  // add an auxilliary parameter linked to paramIdx
+  void AddAuxParam(int paramIdx);
+  virtual void SetAuxParamValueFromPlug(int auxParamIdx, double value); // can override if nessecary
+  void SetAllAuxParamsFromGUI();
+  int NAuxParams() { return mAuxParams.GetSize(); }
+  
 protected:
   int mTextEntryLength;
   IText mText;
   IPlugBase* mPlug;
   IRECT mRECT, mTargetRECT;
   int mParamIdx;
+  
+  WDL_TypedBuf<AuxParam> mAuxParams;
   double mValue, mDefaultValue, mClampLo, mClampHi;
   bool mDirty, mHide, mGrayed, mRedraw, mDisablePrompt, mClamped, mDblAsSingleClick, mMOWhenGreyed;
   IChannelBlend mBlend;
+  IControl* mValDisplayControl;
+  IControl* mNameDisplayControl;
+  const char* mTooltip;
 };
 
 enum EDirection { kVertical, kHorizontal };
@@ -110,7 +145,7 @@ public:
 
   bool Draw(IGraphics* pGraphics);
 
-private:
+protected:
   IColor mColor;
 };
 
@@ -147,6 +182,37 @@ public:
   void OnMouseDown(int x, int y, IMouseMod* pMod);
 };
 
+// Like ISwitchControl except it puts up a popup menu instead of cycling through states on click
+class ISwitchPopUpControl : public ISwitchControl
+{
+public:
+  ISwitchPopUpControl(IPlugBase* pPlug, int x, int y, int paramIdx, IBitmap* pBitmap,
+                 IChannelBlend::EBlendMethod blendMethod = IChannelBlend::kBlendNone)
+  : ISwitchControl(pPlug, x, y, paramIdx, pBitmap, blendMethod)
+  {
+    mDisablePrompt = false;
+  }
+  
+  ~ISwitchPopUpControl() {}
+  
+  void OnMouseDown(int x, int y, IMouseMod* pMod);
+};
+
+// A switch where each frame of the bitmap contains images for multiple button states. The Control's mRect will be divided into clickable areas.
+class ISwitchFramesControl : public ISwitchControl
+{
+public:
+  ISwitchFramesControl(IPlugBase* pPlug, int x, int y, int paramIdx, IBitmap* pBitmap, bool imagesAreHorizontal = false,
+                       IChannelBlend::EBlendMethod blendMethod = IChannelBlend::kBlendNone);
+  
+  ~ISwitchFramesControl() {}
+  
+  void OnMouseDown(int x, int y, IMouseMod* pMod);
+  
+protected:
+  WDL_TypedBuf<IRECT> mRECTs;
+};
+
 // On/off switch that has a target area only.
 class IInvisibleSwitchControl : public IControl
 {
@@ -164,7 +230,7 @@ class IRadioButtonsControl : public IControl
 {
 public:
   IRadioButtonsControl(IPlugBase* pPlug, IRECT pR, int paramIdx, int nButtons, IBitmap* pBitmap,
-                       EDirection direction = kVertical);
+                       EDirection direction = kVertical, bool reverse = false);
   ~IRadioButtonsControl() {}
 
   void OnMouseDown(int x, int y, IMouseMod* pMod);
@@ -210,7 +276,7 @@ public:
   virtual bool IsHit(int x, int y);
 
 protected:
-  void SnapToMouse(int x, int y);
+  virtual void SnapToMouse(int x, int y);
   int mLen, mHandleHeadroom;
   IBitmap mBitmap;
   EDirection mDirection;
@@ -261,7 +327,7 @@ public:
 
   bool Draw(IGraphics* pGraphics);
 
-private:
+protected:
   IColor mColor;
   float mMinAngle, mMaxAngle, mInnerRadius, mOuterRadius;
 };
@@ -279,7 +345,7 @@ public:
 
   bool Draw(IGraphics* pGraphics);
 
-private:
+protected:
   IBitmap mBitmap;
   double mMinAngle, mMaxAngle;
   int mYOffset;
@@ -296,7 +362,7 @@ public:
 
   bool Draw(IGraphics* pGraphics);
 
-private:
+protected:
   IBitmap mBitmap;
 };
 
@@ -315,7 +381,7 @@ public:
 
   bool Draw(IGraphics* pGraphics);
 
-private:
+protected:
   IBitmap mBase, mMask, mTop;
   double mMinAngle, mMaxAngle;
 };
@@ -335,7 +401,7 @@ public:
 
   bool Draw(IGraphics* pGraphics);
 
-private:
+protected:
   IRECT mTargetArea;  // Keep this around to swap in & out.
 };
 
@@ -418,7 +484,7 @@ public:
   bool Draw(IGraphics* pGraphics);
   bool IsDirty();
 
-private:
+protected:
   IBitmap mBitmap;
   WDL_String mDir, mFile, mExtensions;
   EFileAction mFileAction;

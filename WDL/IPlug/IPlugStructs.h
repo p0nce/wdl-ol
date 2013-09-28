@@ -232,6 +232,11 @@ struct IRECT
 
     return IRECT(L + l, T, L + l + widthOfSubRect, B);
   }
+  
+  inline IRECT GetPadded(int padding)
+  {
+    return IRECT(L-padding, T-padding, R+padding, B+padding);
+  }
 
   void Clank(IRECT* pRHS)
   {
@@ -371,9 +376,10 @@ struct IMidiMsg
   int Channel(); // returns [0, 15] for midi channels 1 ... 16
 
   EStatusMsg StatusMsg() const;
-  int NoteNumber() const;     // Returns [0, 128), -1 if NA.
-  int Velocity() const;       // Returns [0, 128), -1 if NA.
-  int Program() const;        // Returns [0, 128), -1 if NA.
+  int NoteNumber() const;     // Returns [0, 127), -1 if NA.
+  int Velocity() const;       // Returns [0, 127), -1 if NA.
+  int Pressure() const;       // Returns [0, 127), -1 if NA.
+  int Program() const;        // Returns [0, 127), -1 if NA.
   double PitchWheel() const;  // Returns [-1.0, 1.0], zero if NA.
   EControlChangeMsg ControlChangeIdx() const;
   double ControlChange(EControlChangeMsg idx) const;      // return [0, 1], -1 if NA.
@@ -404,6 +410,17 @@ struct ITimeInfo
     mNumerator = mDenominator = 4;
     mTransportIsRunning = mTransportLoopEnabled = false;
   }
+};
+
+struct ISysEx
+{
+  int mOffset, mSize;
+  const BYTE* mData;
+
+  ISysEx(int offs = 0, const BYTE* pData = NULL, int size = 0) : mOffset(offs), mData(pData), mSize(size) {}
+
+  void Clear();
+  void LogMsg();
 };
 
 const int MAX_PRESET_NAME_LEN = 256;

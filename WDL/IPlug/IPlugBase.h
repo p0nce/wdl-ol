@@ -72,6 +72,8 @@ public:
   virtual void OnActivate(bool active) { TRACE;  IMutexLock lock(this); }
 
   virtual void ProcessMidiMsg(IMidiMsg* pMsg);
+  virtual void ProcessSysEx(ISysEx* pSysEx) {}
+
   virtual bool MidiNoteName(int noteNumber, char* rName) { *rName = '\0'; return false; }
 
   // Implementations should set a mutex lock and call SerializeParams() after custom data is serialized
@@ -192,12 +194,12 @@ protected:
   #ifndef OS_IOS
   virtual void AttachGraphics(IGraphics* pGraphics);
   #endif
-  void SetSampleRate(double sampleRate);
-  virtual void SetBlockSize(int blockSize);
+
   // If latency changes after initialization (often not supported by the host).
   virtual void SetLatency(int samples);
   virtual bool SendMidiMsg(IMidiMsg* pMsg) = 0;
-  virtual bool SendMidiMsgs(WDL_TypedBuf<IMidiMsg>* pMsgs) = 0;
+  bool SendMidiMsgs(WDL_TypedBuf<IMidiMsg>* pMsgs);
+  virtual bool SendSysEx(ISysEx* pSysEx) { return false; }
   bool IsInst() { return mIsInst; }
 
   // You can't use these three methods with chunks-based plugins, because there is no way to set the custom data
@@ -272,6 +274,10 @@ public:
   bool LoadProgramFromFXP();
   bool LoadBankFromFXB();
   #endif
+  
+  void SetSampleRate(double sampleRate);
+  virtual void SetBlockSize(int blockSize); // overridden in IPlugAU
+  
   WDL_Mutex mMutex;
 
   struct IMutexLock
@@ -308,13 +314,13 @@ private:
   };
 
 protected:
-  // TODO: probably this stuff should be private, not protected
   bool mStateChunks, mIsInst, mIsBypassed;
   int mCurrentPresetIdx;
   double mSampleRate;
   int mBlockSize, mLatency;
   WDL_String mPreviousPath; // for saving/loading fxps
   NChanDelayLine* mDelay; // for delaying dry signal when mLatency > 0 and plugin is bypassed
+  WDL_PtrList<const char> mParamGroups;
 
 private:
   IGraphics* mGraphics;

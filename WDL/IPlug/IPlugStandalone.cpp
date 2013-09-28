@@ -52,46 +52,6 @@ IPlugStandalone::IPlugStandalone(IPlugInstanceInfo instanceInfo,
   #endif
 }
 
-// TODO: BeginInformHostOfParamChange etc, maybe needed for ios state persistance?
-void IPlugStandalone::BeginInformHostOfParamChange(int idx)
-{
-}
-
-void IPlugStandalone::InformHostOfParamChange(int idx, double normalizedValue)
-{
-}
-
-void IPlugStandalone::EndInformHostOfParamChange(int idx)
-{
-}
-
-void IPlugStandalone::InformHostOfProgramChange()
-{
-}
-
-// TODO: GetSamplePos()
-int IPlugStandalone::GetSamplePos()
-{
-  return 0;
-}
-
-// TODO: GetTempo()
-double IPlugStandalone::GetTempo()
-{
-  return DEFAULT_TEMPO;
-}
-
-// TODO: GetTime()
-void IPlugStandalone::GetTime(ITimeInfo* pTimeInfo)
-{
-}
-
-// TODO: GetTimeSig()
-void IPlugStandalone::GetTimeSig(int* pNum, int* pDenom)
-{
-
-}
-
 void IPlugStandalone::ResizeGraphics(int w, int h)
 {
   #ifndef OS_IOS
@@ -107,16 +67,6 @@ void IPlugStandalone::ResizeGraphics(int w, int h)
     OnWindowResize();
   }
   #endif
-}
-
-void IPlugStandalone::SetSampleRate(double sampleRate)
-{
-  mSampleRate = sampleRate;
-}
-
-void IPlugStandalone::SetBlockSize(int blockSize)
-{
-  mBlockSize = blockSize;
 }
 
 bool IPlugStandalone::SendMidiMsg(IMidiMsg* pMsg)
@@ -146,9 +96,20 @@ bool IPlugStandalone::SendMidiMsg(IMidiMsg* pMsg)
   return false;
 }
 
-// TODO: SendMidiMsgs()
-bool IPlugStandalone::SendMidiMsgs(WDL_TypedBuf<IMidiMsg>* pMsgs)
+bool IPlugStandalone::SendSysEx(ISysEx* pSysEx)
 {
+  if (mMidiOut)
+  {  
+    std::vector<unsigned char> message;
+    
+    for (int i = 0; i < pSysEx->mSize; i++) {
+      message.push_back(pSysEx->mData[i]);
+    }
+    
+    mMidiOut->sendMessage( &message );
+    return true;
+  }
+  
   return false;
 }
 

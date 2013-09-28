@@ -41,6 +41,7 @@ class WDL_Queue
 {
 public:
   WDL_Queue() : m_hb(4096 WDL_HEAPBUF_TRACEPARM("WDL_Queue")), m_pos(0) { }
+  WDL_Queue(int hbgran) : m_hb(hbgran WDL_HEAPBUF_TRACEPARM("WDL_Queue")), m_pos(0) { }
   ~WDL_Queue() { }
 
   template <class T> void* AddT(T* buf)
@@ -61,11 +62,6 @@ public:
     return newbuf; 
   }
 
-  int GetSize()
-  {
-    return m_hb.GetSize()-m_pos;
-  }
-
   template <class T> T* GetT(T* val=0)
   {
     T* p = (T*) Get(sizeof(T));
@@ -80,7 +76,7 @@ public:
     return p;
   }
     
-  void *Get()
+  void *Get() const
   {
     void *buf=m_hb.Get();
     if (buf && m_pos >= 0 && m_pos < m_hb.GetSize()) return (char *)buf+m_pos;
@@ -93,7 +89,11 @@ public:
     return m_hb.Get();
   }
 
-  int Available() { return m_hb.GetSize() - m_pos; }
+  int GetSize() const
+  {
+    return m_hb.GetSize()-m_pos;
+  }
+  int Available() const { return GetSize(); }
 
   void Clear()
   {
@@ -215,24 +215,23 @@ public:
     if (m_pos >= olen) olen=m_pos=0;
     len *= sizeof(T);
     void *obuf=m_hb.Resize(olen+len,false);
-    if (!obuf) return 0;
+    if (!obuf||m_hb.GetSize()!=olen+len) return 0;
     if (buf) memcpy((char*)obuf+olen,buf,len);
     return (T*) ((char*)obuf+olen);
   }
 
-  int GetSize()
-  {
-    return (m_hb.GetSize()-m_pos)/sizeof(T);
-  }
-
-  T *Get()
+  T *Get() const
   {
     void *buf=m_hb.Get();
     if (buf && m_pos >= 0 && m_pos < m_hb.GetSize()) return (T*)((char *)buf+m_pos);
     return NULL;
   }
 
-  int Available() { return (m_hb.GetSize() - m_pos)/sizeof(T); }
+  int GetSize() const
+  {
+    return (m_hb.GetSize()-m_pos)/sizeof(T);
+  }
+  int Available() const { return GetSize(); }
 
   void Clear()
   {

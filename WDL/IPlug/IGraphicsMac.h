@@ -5,6 +5,12 @@
   #define IPLUG_NO_CARBON_SUPPORT
 #endif
 
+// carbon support uses quickdraw methods that have been removed in SDKs > 10.6
+#if __MAC_OS_X_VERSION_MAX_ALLOWED > 1060
+  #define IPLUG_NO_CARBON_SUPPORT
+  #warning Carbon GUIs disabled when compiling against 10.7 or higher sdk
+#endif
+
 #include "IGraphics.h"
 #include "../swell/swell.h"
 
@@ -85,10 +91,13 @@ public:
   void ForceEndUserEdit();
 
   const char* GetGUIAPI();
+  
+  void UpdateTooltips();
 
   void HostPath(WDL_String* pPath);
   void PluginPath(WDL_String* pPath);
   void DesktopPath(WDL_String* pPath);
+  void AppSupportPath(WDL_String* pPath);
 
   void PromptForFile(WDL_String* pFilename, EFileAction action = kFileOpen, WDL_String* pDir = 0, char* extensions = "");   // extensions = "txt wav" for example.
   bool PromptForColor(IColor* pColor, char* prompt = "");
@@ -107,7 +116,7 @@ public:
 
 protected:
   virtual LICE_IBitmap* OSLoadBitmap(int ID, const char* name);
-
+  
 private:
 #ifndef IPLUG_NO_CARBON_SUPPORT
   IGraphicsCarbon* mGraphicsCarbon;
@@ -115,7 +124,13 @@ private:
   void* mGraphicsCocoa;   // Can't forward-declare IGraphicsCocoa because it's an obj-C object.
 
   WDL_String mBundleID;
-
+  
+  friend int GetMouseOver(IGraphicsMac* pGraphics);
+  
+#ifndef IPLUG_NO_CARBON_SUPPORT
+  friend class IGraphicsCarbon;
+#endif
+  
 public: //TODO: make this private
   void* mHostNSWindow;
 };

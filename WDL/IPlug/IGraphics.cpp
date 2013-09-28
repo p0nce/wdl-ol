@@ -6,6 +6,10 @@
 // Only looked at if USE_IDLE_CALLS is defined.
 #define IDLE_TICKS 20
 
+#ifndef CONTROL_BOUNDS_COLOR
+  #define CONTROL_BOUNDS_COLOR COLOR_GREEN
+#endif
+
 class BitmapStorage
 {
 public:
@@ -157,7 +161,7 @@ inline int LiceBlendMode(const IChannelBlend* pBlend)
 }
 
 IGraphics::IGraphics(IPlugBase* pPlug, int w, int h, int refreshFPS)
-  :	mPlug(pPlug)
+  : mPlug(pPlug)
   , mWidth(w)
   , mHeight(h)
   , mIdleTicks(0)
@@ -174,6 +178,8 @@ IGraphics::IGraphics(IPlugBase* pPlug, int w, int h, int refreshFPS)
   , mCursorHidden(false)
   , mHiddenMousePointX(-1)
   , mHiddenMousePointY(-1)
+  , mEnableTooltips(false)
+  , mShowControlBounds(false)
 {
   mFPS = (refreshFPS > 0 ? refreshFPS : DEFAULT_FPS);
 }
@@ -318,6 +324,14 @@ void IGraphics::SetParameterFromPlug(int paramIdx, double value, bool normalized
       pControl->SetValueFromPlug(value);
       // Could be more than one, don't break until we check them all.
     }
+    
+    // now look for any auxilliary parameters
+    int auxParamIdx = pControl->AuxParamIdx(paramIdx);
+    
+    if (auxParamIdx > -1) // there are aux params
+    {
+      pControl->SetAuxParamValueFromPlug(auxParamIdx, value);
+    }
   }
 }
 
@@ -341,18 +355,18 @@ void IGraphics::SetAllControlsDirty()
   }
 }
 
-//void IGraphics::SetParameterFromGUI(int paramIdx, double normalizedValue)
-//{
-//  int i, n = mControls.GetSize();
-//  IControl** ppControl = mControls.GetList();
-//  for (i = 0; i < n; ++i, ++ppControl) {
-//    IControl* pControl = *ppControl;
-//    if (pControl->ParamIdx() == paramIdx) {
-//      pControl->SetValueFromUserInput(normalizedValue);
-//      // Could be more than one, don't break until we check them all.
-//    }
-//  }
-//}
+void IGraphics::SetParameterFromGUI(int paramIdx, double normalizedValue)
+{
+  int i, n = mControls.GetSize();
+  IControl** ppControl = mControls.GetList();
+  for (i = 0; i < n; ++i, ++ppControl) {
+    IControl* pControl = *ppControl;
+    if (pControl->ParamIdx() == paramIdx) {
+      pControl->SetValueFromUserInput(normalizedValue);
+      // Could be more than one, don't break until we check them all.
+    }
+  }
+}
 
 void IGraphics::PromptUserInput(IControl* pControl, IParam* pParam, IRECT* pTextRect)
 {
@@ -714,22 +728,6 @@ bool IGraphics::IsDirty(IRECT* pR)
   return dirty;
 }
 
-//void IGraphics::DisplayControlValue(IControl* pControl)
-//{
-//  char str[32];
-//  int paramIdx = pControl->ParamIdx();
-//  if (paramIdx >= 0) {
-//    IParam* pParam = mPlug->GetParam(paramIdx);
-//    pParam->GetDisplayForHost(str);
-//    IRECT r = *(pControl->GetRECT());
-//    r.L = r.MW() - 10;
-//    r.R = r.L + 20;
-//    r.T = r.MH() - 5;
-//    r.B = r.T + 10;
-//    DrawIText(&IText(), str, &r);
-//  }
-//}
-
 // The OS is announcing what needs to be redrawn,
 // which may be a larger area than what is strictly dirty.
 bool IGraphics::Draw(IRECT* pR)
@@ -804,13 +802,16 @@ bool IGraphics::Draw(IRECT* pR)
     }
   }
 
-  #ifdef SHOW_CONTROL_BOUNDARIES
-  for (int j = 1; j < mControls.GetSize(); j++)
+#ifndef NDEBUG
+  if (mShowControlBounds) 
   {
-    IControl* pControl = mControls.Get(j);
-    DrawRect(&COLOR_RED, pControl->GetRECT());
+    for (int j = 1; j < mControls.GetSize(); j++)
+    {
+      IControl* pControl = mControls.Get(j);
+      DrawRect(&CONTROL_BOUNDS_COLOR, pControl->GetRECT());
+    }
   }
-  #endif
+#endif
 
   return DrawScreen(pR);
 }
@@ -847,30 +848,31 @@ void IGraphics::OnMouseDown(int x, int y, IMouseMod* pMod)
     #endif
     
     #ifdef AAX_API
-    uint32_t mods = GetAAXModifiersFromIMouseMod(pMod);
-    
     if (mAAXViewContainer && paramIdx >= 0)
     {
+      uint32_t mods = GetAAXModifiersFromIMouseMod(pMod);
+      #ifdef OS_WIN
+      // required to get start/windows and alt keys
+      uint32_t aaxViewMods = 0;
+      mAAXViewContainer->GetModifiers(&aaxViewMods);
+      mods |= aaxViewMods;
+      #endif
       WDL_String paramID;
       paramID.SetFormatted(32, "%i", paramIdx+1);
-      
+
       if (mAAXViewContainer->HandleParameterMouseDown(paramID.Get(), mods) == AAX_SUCCESS)
       {
         return; // event handled by PT
       }
     }
     #endif
-        
-    pControl->OnMouseDown(x, y, pMod);
     
-    // need to do these things again in case the mouse message caused a resize/rebuild
-    pControl = mControls.Get(c);
-    paramIdx = pControl->ParamIdx();
-
     if (paramIdx >= 0)
     {
       mPlug->BeginInformHostOfParamChange(paramIdx);
     }
+        
+    pControl->OnMouseDown(x, y, pMod);
   }
 }
 

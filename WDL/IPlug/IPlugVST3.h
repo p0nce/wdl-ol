@@ -54,7 +54,8 @@ public:
 //  tresult PLUGIN_API getState(IBStream* state);
 //  tresult PLUGIN_API setComponentState(IBStream *state);
   tresult PLUGIN_API canProcessSampleSize(int32 symbolicSampleSize);
-
+  Steinberg::uint32 PLUGIN_API getLatencySamples ();
+  
   // IEditController
   IPlugView* PLUGIN_API createView (const char* name);
   tresult PLUGIN_API setEditorState (IBStream* state);
@@ -66,7 +67,7 @@ public:
   tresult PLUGIN_API getParamValueByString (ParamID tag, TChar* string, ParamValue& valueNormalized);
 
   //IUnitInfo
-  int32 PLUGIN_API getUnitCount() { return 1; }
+  int32 PLUGIN_API getUnitCount();
   tresult PLUGIN_API getUnitInfo(int32 unitIndex, UnitInfo& info);
   int32 PLUGIN_API getProgramListCount();
   tresult PLUGIN_API getProgramListInfo(int32 listIndex, ProgramListInfo& info);
@@ -76,18 +77,16 @@ public:
   virtual tresult PLUGIN_API hasProgramPitchNames(ProgramListID listId, int32 programIndex) {return kNotImplemented;}
   virtual tresult PLUGIN_API getProgramPitchName(ProgramListID listId, int32 programIndex, int16 midiPitch, String128 name) {return kNotImplemented;}
   virtual UnitID PLUGIN_API getSelectedUnit () {return kRootUnitId;}
-  virtual tresult PLUGIN_API selectUnit (UnitID unitId) {return kNotImplemented;}
-  virtual tresult PLUGIN_API getUnitByBus (MediaType type, BusDirection dir, int32 busIndex, int32 channel, UnitID& unitId) {return kNotImplemented;}
-  virtual tresult PLUGIN_API setUnitProgramData (int32 listOrUnitId, int32 programIndex, IBStream* data) {return kNotImplemented;}
-
+  virtual tresult PLUGIN_API selectUnit(UnitID unitId) {return kNotImplemented;}
+  virtual tresult PLUGIN_API getUnitByBus(MediaType type, BusDirection dir, int32 busIndex, int32 channel, UnitID& unitId) {return kNotImplemented;}
+  virtual tresult PLUGIN_API setUnitProgramData(int32 listOrUnitId, int32 programIndex, IBStream* data) {return kNotImplemented;}
+  
   //IPlugBase
   virtual void BeginInformHostOfParamChange(int idx);
   virtual void InformHostOfParamChange(int idx, double normalizedValue);
   virtual void EndInformHostOfParamChange(int idx);
   virtual void InformHostOfProgramChange() {};
   
-  virtual void SetParameterFromGUI(int idx, double normalizedValue);
-
   virtual bool IsRenderingOffline() { return (processSetup.processMode == kOffline); }
 
   virtual int GetSamplePos();
@@ -124,7 +123,6 @@ public:
 
 protected:
   virtual bool SendMidiMsg(IMidiMsg* pMsg) {return false;}  //TODO
-  virtual bool SendMidiMsgs(WDL_TypedBuf<IMidiMsg>* pMsgs) {return false;} //TODO
 
 private:
   void addDependentView (IPlugVST3View* view);

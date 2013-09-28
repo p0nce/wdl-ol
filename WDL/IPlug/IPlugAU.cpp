@@ -284,8 +284,7 @@ ComponentResult IPlugAU::IPlugAUEntry(ComponentParameters *params, void* pPlug)
       _this->Reset();
       return noErr;
     }
-    case kMusicDeviceMIDIEventSelect:     // Ignore kMusicDeviceSysExSelect for now.
-    {
+    case kMusicDeviceMIDIEventSelect: {
       IMidiMsg msg;
       msg.mStatus = GET_COMP_PARAM(UInt32, 3, 4);
       msg.mData1 = GET_COMP_PARAM(UInt32, 2, 4);
@@ -294,9 +293,15 @@ ComponentResult IPlugAU::IPlugAUEntry(ComponentParameters *params, void* pPlug)
       _this->ProcessMidiMsg(&msg);
       return noErr;
     }
-    NO_OP(kMusicDeviceSysExSelect);
-    case kMusicDevicePrepareInstrumentSelect:
-    {
+    case kMusicDeviceSysExSelect: {
+      ISysEx sysex;
+      sysex.mData = GET_COMP_PARAM(UInt8*, 1, 2);
+      sysex.mSize = GET_COMP_PARAM(UInt32, 0, 2);
+      sysex.mOffset = 0;
+      _this->ProcessSysEx(&sysex);
+      return noErr;
+    }
+    case kMusicDevicePrepareInstrumentSelect: {
       return noErr;
     }
     case kMusicDeviceReleaseInstrumentSelect:
@@ -626,6 +631,30 @@ ComponentResult IPlugAU::GetProperty(AudioUnitPropertyID propID, AudioUnitScope 
         pInfo->minValue = vMin;
         pInfo->maxValue = vMax;
         pInfo->defaultValue = pParam->Value();
+        
+        const char* paramGroupName = pParam->GetParamGroupForHost();
+
+        if (CSTR_NOT_EMPTY(paramGroupName))
+        {
+          int clumpID = 0;
+          
+          for(int i = 0; i< mParamGroups.GetSize(); i++)
+          {
+            if(strcmp(paramGroupName, mParamGroups.Get(i)) == 0)
+            {
+              clumpID = i+1;
+            }
+          }
+          
+          if (clumpID == 0) // new clump
+          {
+            mParamGroups.Add(paramGroupName);
+            clumpID = mParamGroups.GetSize();
+          }
+          
+          pInfo->flags = pInfo->flags | kAudioUnitParameterFlag_HasClump;
+          pInfo->clumpID = clumpID;
+        }
       }
       return noErr;
     }
@@ -932,7 +961,21 @@ ComponentResult IPlugAU::GetProperty(AudioUnitPropertyID propID, AudioUnitScope 
       }
       return noErr;
     }
-    NO_OP(kAudioUnitProperty_ParameterClumpName);        // 35,
+    case kAudioUnitProperty_ParameterClumpName:          // 35,
+    {
+      *pDataSize = sizeof (AudioUnitParameterNameInfo);
+      if (pData && scope == kAudioUnitScope_Global)
+      {
+        AudioUnitParameterNameInfo* parameterNameInfo = (AudioUnitParameterNameInfo *) pData;
+        int clumpId = parameterNameInfo->inID;
+        
+        if (clumpId < 1)
+          return kAudioUnitErr_PropertyNotInUse;
+        
+        parameterNameInfo->outName = MakeCFString(mParamGroups.Get(clumpId-1));
+      }
+      return noErr;
+    }
     case kAudioUnitProperty_CurrentPreset:               // 28,
     case kAudioUnitProperty_PresentPreset:               // 36,       // listenable
     {
@@ -2111,17 +2154,4 @@ void IPlugAU::SetLatency(int samples)
 bool IPlugAU::SendMidiMsg(IMidiMsg* pMsg)
 {
   return false;
-}
-
-bool IPlugAU::SendMidiMsgs(WDL_TypedBuf<IMidiMsg>* pMsgs)
-{
-  int i, n = pMsgs->GetSize();
-  IMidiMsg* pMsg = pMsgs->Get();
-  
-  for (i = 0; i < n; ++i, ++pMsg)
-  {
-    SendMidiMsg(pMsg);
-  }
-  
-  return true;
 }

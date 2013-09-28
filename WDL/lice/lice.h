@@ -254,6 +254,8 @@ class LICE_SubBitmap : public LICE_IBitmap // note: you should only keep these a
       return true;
     }
 
+    virtual bool isFlipped() { return m_parent && m_parent->isFlipped();  }
+
     virtual LICE_pixel *getBits() 
     {
       if (!m_parent) return 0;
@@ -345,9 +347,9 @@ bool LICE_WriteJPG(const char *filename, LICE_IBitmap *bmp, int quality=95, bool
 bool LICE_WriteGIF(const char *filename, LICE_IBitmap *bmp, int transparent_alpha=0, bool dither=true); // if alpha<transparent_alpha then transparent. if transparent_alpha<0, then intra-frame checking is used
 
 // animated GIF API. use transparent_alpha=-1 to encode unchanged pixels as transparent
-void *LICE_WriteGIFBegin(const char *filename, LICE_IBitmap *firstframe, int transparent_alpha=0, int frame_delay=0, bool dither=true);
+void *LICE_WriteGIFBegin(const char *filename, LICE_IBitmap *firstframe, int transparent_alpha=0, int frame_delay=0, bool dither=true, int nreps=0); // nreps=0 for infinite
 void *LICE_WriteGIFBeginNoFrame(const char *filename, int w, int h, int transparent_alpha=0, bool dither=true);
-bool LICE_WriteGIFFrame(void *handle, LICE_IBitmap *frame, int xpos, int ypos, bool perImageColorMap=false, int frame_delay=0);
+bool LICE_WriteGIFFrame(void *handle, LICE_IBitmap *frame, int xpos, int ypos, bool perImageColorMap=false, int frame_delay=0, int nreps=0); // nreps only used on the first frame, 0=infinite
 bool LICE_WriteGIFEnd(void *handle);
 int LICE_SetGIFColorMapFromOctree(void *wr, void *octree, int numcolors); // can use after LICE_WriteGIFBeginNoFrame and before LICE_WriteGIFFrame
 
@@ -475,6 +477,7 @@ void LICE_RoundRect(LICE_IBitmap *drawbm, float xpos, float ypos, float w, float
 
 // useful for drawing shapes from a cache
 void LICE_DrawGlyph(LICE_IBitmap* dest, int x, int y, LICE_pixel color, const LICE_pixel_chan* alphas, int glyph_w, int glyph_h, float alpha=1.0f, int mode = 0);
+void LICE_DrawGlyphEx(LICE_IBitmap* dest, int x, int y, LICE_pixel color, const LICE_pixel_chan* alphas, int glyph_w, int glyph_span, int glyph_h, float alpha=1.0f, int mode = 0);
 
 // quadratic bezier
 // tol means try to draw segments no longer than tol px

@@ -34,8 +34,13 @@
 #include "fastqueue.h"
 #include "fft.h"
 
+#ifndef WDL_CONVO_MAX_IMPULSE_NCH
 #define WDL_CONVO_MAX_IMPULSE_NCH 2
+#endif
+
+#ifndef WDL_CONVO_MAX_PROC_NCH
 #define WDL_CONVO_MAX_PROC_NCH 2
+#endif
 
 //#define WDL_CONVO_WANT_FULLPRECISION_IMPULSE_STORAGE // define this for slowerness with -138dB error difference in resulting output (+-1 LSB at 24 bit)
 
@@ -105,7 +110,6 @@ private:
   WDL_Queue m_samplesin2[WDL_CONVO_MAX_PROC_NCH];
   WDL_FastQueue m_samplesin[WDL_CONVO_MAX_PROC_NCH];
 
-  int m_samplesout_delay[WDL_CONVO_MAX_PROC_NCH];
   int m_hist_pos[WDL_CONVO_MAX_PROC_NCH];
 
   WDL_TypedBuf<WDL_FFT_REAL> m_samplehist[WDL_CONVO_MAX_PROC_NCH]; // FFT'd sample blocks per channel

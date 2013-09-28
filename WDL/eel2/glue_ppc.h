@@ -45,13 +45,13 @@ static void GLUE_MOV_PX_DIRECTVALUE_GEN(void *b, INT_PTR v, int wv)
 // mflr r5
 // stwu r5, -16(r1)
 const static unsigned int GLUE_FUNC_ENTER[2] = { 0x7CA802A6, 0x94A1FFF0 };
+#define GLUE_FUNC_ENTER_SIZE 8
 
 // lwz r5, 0(r1)
 // addi r1, r1, 16
 // mtlr r5
 const static unsigned int GLUE_FUNC_LEAVE[3] = { 0x80A10000, 0x38210010, 0x7CA803A6 };
-#define GLUE_FUNC_ENTER_SIZE sizeof(GLUE_FUNC_ENTER)
-#define GLUE_FUNC_LEAVE_SIZE sizeof(GLUE_FUNC_LEAVE)
+#define GLUE_FUNC_LEAVE_SIZE 12
 
 const static unsigned int GLUE_RET[]={0x4E800020}; // blr
 
@@ -165,14 +165,14 @@ static void GLUE_CALL_CODE(INT_PTR bp, INT_PTR cp, INT_PTR rt)
             ::"r" (cp), "r" (bp), "r" (rt), "r" (consttab));
 };
 
-static unsigned char *EEL_GLUE_set_immediate(void *_p, const void *newv)
+static unsigned char *EEL_GLUE_set_immediate(void *_p, INT_PTR newv)
 {
   // 64 bit ppc would take some work
   unsigned int *p=(unsigned int *)_p;
   while ((p[0]&0x0000FFFF) != 0x0000dead && 
          (p[1]&0x0000FFFF) != 0x0000beef) p++;
-  p[0] = (p[0]&0xFFFF0000) | (((unsigned int)newv)>>16);
-  p[1] = (p[1]&0xFFFF0000) | (((unsigned int)newv)&0xFFFF);
+  p[0] = (p[0]&0xFFFF0000) | (((newv)>>16)&0xFFFF);
+  p[1] = (p[1]&0xFFFF0000) | ((newv)&0xFFFF);
 
   return (unsigned char *)(p+1);
 }
@@ -235,6 +235,22 @@ static unsigned int GLUE_POP_STACK_TO_FPSTACK[1] = { 0 }; // todo
 
 static const unsigned int GLUE_SET_P1_Z[] =  { 0x38600000 }; // li r3, 0
 static const unsigned int GLUE_SET_P1_NZ[] = { 0x38600001 }; // li r3, 1
+
+
+static void *GLUE_realAddress(void *fn, void *fn_e, int *size)
+{
+  // magic numbers: mr r0,r0 ; mr r1,r1 ; mr r2, r2
+  static const unsigned char sig[12] = { 0x7c, 0x00, 0x03, 0x78, 0x7c, 0x21, 0x0b, 0x78, 0x7c, 0x42, 0x13, 0x78 };
+  unsigned char *p = (unsigned char *)fn;
+
+  while (memcmp(p,sig,sizeof(sig))) p+=4;
+  p+=sizeof(sig);
+  fn = p;
+
+  while (memcmp(p,sig,sizeof(sig))) p+=4;
+  *size = p - (unsigned char *)fn;
+  return fn;
+}
 
 // end of ppc
 
